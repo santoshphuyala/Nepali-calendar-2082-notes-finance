@@ -1,0 +1,42 @@
+Nepali Calendar 2082 - User Guide
+
+1. Overview
+This application allows you to view a Nepali calendar, manage notes, and track your finances.
+
+2. Navigation
+- Home: View the calendar, holidays, and monthly financial summary.
+- Calendar: Focus on the calendar view and holidays.
+- Finance: Manage financial records and view reports.
+- Notes: Manage your personal notes.
+
+3. Using the Calendar
+- Select a year (2081-2083 BS) from the dropdown.
+- Click on a month tab to view that month.
+- Click on a day to add a note or financial entry.
+- Use the "Today" button to jump to the current date.
+
+4. Managing Notes
+- Click "Add Note" to create a new note.
+- Use the modal to enter a title, description, and time.
+- Check "Recurring Monthly" to repeat the note every month.
+- Check "Set Reminder" to enable notifications (if supported).
+- View all notes in the "Notes" section, filter by month, and search by keyword.
+- Export notes to Excel or PDF using the dropdowns.
+
+5. Managing Finances
+- Click "Add Finance" to record income or expenses.
+- Select "Income" or "Expense", enter an amount, description, and category.
+- Set a monthly budget for tracking.
+- View financial reports (weekly, monthly, yearly) in the "Finance" section.
+- Use the "Records" tab to edit or delete entries.
+- Export financial data to Excel or PDF.
+
+6. Language Toggle
+- Click "Toggle Language (EN/NE)" to switch between English and Nepali.
+
+7. Data Persistence
+- All notes, financial entries, and budgets are saved in your browser's localStorage.
+- Use the "Import" option to load data from a JSON file.
+- Use the "Export" option to save your data as Excel or PDF.
+
+For support, contact the developer at [santoshphuyalji@gmail.com].
