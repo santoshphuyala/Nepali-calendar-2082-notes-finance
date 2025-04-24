@@ -1,0 +1,110 @@
+HELP FILE FOR NEPALI CALENDAR 2082
+================================
+
+Welcome to the Nepali Calendar 2082 application! This guide will help you navigate and use the features of the calendar effectively.
+
+1. OVERVIEW
+-----------
+The Nepali Calendar is a web-based application designed to display the Nepali Bikram Sambat (BS) calendar alongside the Gregorian calendar. It allows you to:
+- View monthly calendars for the years 2081, 2082, and 2083 BS.
+- Track holidays and festivals.
+- Add, edit, and manage notes and financial entries (income/expense).
+- Export data to Excel or PDF formats.
+- Backup and restore data.
+- Toggle between English and Nepali languages.
+
+2. GETTING STARTED
+------------------
+- Open the `nepali calendar final.html` file in a modern web browser (Chrome, Firefox, Edge, etc.).
+- The calendar defaults to the year 2082 BS and the current month based on today's date.
+- Use the dropdown menu at the top to select a different year (2081, 2082, or 2083).
+- Click the month tabs to switch between months.
+
+3. KEY FEATURES
+---------------
+### 3.1 Viewing the Calendar
+- The calendar displays days in a grid format, with Nepali BS dates and corresponding Gregorian dates.
+- Saturdays and holidays are highlighted with distinct colors:
+  - Saturday: Grey
+  - Dashain: Pink
+  - Tihar: Purple
+  - National holidays: Green
+  - Ethnic festivals: Orange
+  - Women-related holidays: Light Pink
+  - Education-related holidays: Blue
+  - Jatra: Purple
+  - Observed holidays: Light Green
+  - Disability-related: Teal
+  - Birth anniversaries: Orange
+- Hover over a day to see festival details in a tooltip.
+- The current date is highlighted with a blue border.
+
+### 3.2 Adding Notes and Finances
+- Click on any calendar day to open the entry form, or use the "Add Note" or "Add Finance" buttons.
+- In the entry form:
+  - Select the entry type: Note, Income, or Expense.
+  - Enter a title (or amount for finances).
+  - Optionally add a time, description, category (for finances), and set recurring or reminder options.
+  - For expenses, you can set a monthly budget.
+  - Click "Save Entry" to save or "Edit Entry" to modify an existing entry.
+- Indicators on calendar days show notes (blue dot), income (green dot), or expenses (red dot).
+
+### 3.3 Viewing Notes
+- Click "View Notes" to open the notes modal.
+- Search notes by title or description.
+- Filter notes by month using the dropdown.
+- Edit or delete notes using the links provided.
+
+### 3.4 Viewing Finances
+- Click "View Finances" to open the financial reports modal.
+- View reports in four tabs:
+  - Weekly: Income and expenses by week with a line chart.
+  - Monthly: Income, expenses, budget, and variance by month with a bar chart.
+  - Yearly: Total income, expenses, budget, and variance with a pie chart.
+  - Records: Daily financial records with a line chart.
+- Search financial entries by amount, description, or category.
+
+### 3.5 Exporting Data
+- Use the dropdown menus for "Excel Export" or "PDF Export" to download:
+  - Notes: All saved notes.
+  - Finances: All income and expense entries.
+  - Monthly Calendar: Calendar data for the selected year.
+  - Yearly Holiday: Holiday list for the selected year.
+- Excel exports are in `.xlsx` format, and PDF exports are in `.pdf` format.
+
+### 3.6 Importing Data
+- Use the "Import" dropdown to upload:
+  - Notes or Finances: JSON files.
+  - Monthly Calendar or Yearly Holiday: Excel (.xlsx) files.
+- Select the file type and choose the file to import.
+
+### 3.7 Backup and Restore
+- Click "Backup" to download a JSON file containing all notes, categories, and budgets.
+- Click "Restore" to upload a previously saved JSON backup file to restore data.
+
+### 3.8 Undo Actions
+- Click "Undo" to revert the last action (e.g., deleting a note or clearing all notes).
+
+### 3.9 Language Toggle
+- Click "Toggle Language (EN/NE)" to switch between English and Nepali.
+- All text, including calendar data, buttons, and labels, will update accordingly.
+
+### 3.10 Monthly Summary and Holidays
+- The "Monthly Summary" section shows total income, expenses, balance, budget, and variance for the current month.
+- The "Holidays this Month" section lists all holidays for the current month.
+
+4. TIPS AND TROUBLESHOOTING
+---------------------------
+- Ensure your browser allows notifications for reminders to work.
+- If the calendar doesn't load, check if JavaScript is enabled in your browser.
+- Storage limits may prevent saving large amounts of data. Clear old notes if you encounter issues.
+- The application works offline once loaded, but internet access is required for initial loading of external libraries (Bootstrap, Chart.js, jsPDF, XLSX).
+- If importing data fails, verify the file format matches the expected structure (JSON for notes/finances, XLSX for calendar/holidays).
+
+5. CONTACT
+----------
+For support or feedback, contact the designer:
+- Name: Santosh Phuyal
+- Note: No direct contact details are provided in the application.
+
+Thank you for using the Nepali Calendar 2082!

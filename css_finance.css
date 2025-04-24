@@ -1,0 +1,40 @@
+.event-preview { 
+    font-size: 0.65rem; 
+    color: #757575; 
+    overflow: hidden; 
+    text-overflow: ellipsis; 
+    white-space: nowrap; 
+}
+.finance-tooltip {
+    display: none; 
+    position: absolute; 
+    background: #212121; 
+    color: #fff; 
+    padding: 0.5rem;
+    border-radius: 6px; 
+    font-size: 0.7rem; 
+    z-index: 100; 
+    top: -2rem; 
+    left: 50%;
+    transform: translateX(-50%); 
+    white-space: nowrap;
+}
+.calendar-day:hover .finance-tooltip { 
+    display: block; 
+}
+.income-indicator, .expense-indicator {
+    position: absolute; 
+    top: 0.4rem; 
+    right: 0.4rem; 
+    width: 8px; 
+    height: 8px; 
+    border-radius: 50%;
+}
+.income-indicator { background: var(--income); }
+.expense-indicator { background: var(--expense); }
+.report-table th, .report-table td { 
+    font-size: 0.9rem; 
+}
+@media (max-width: 768px) {
+    .event-preview { font-size: 0.55rem; }
+}
