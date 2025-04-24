@@ -95,6 +95,7 @@ function checkUpcomingReminders() {
 }
 
 if (isBrowser) {
+    // Language Toggle
     const languageToggle = document.getElementById('languageToggle');
     if (languageToggle) {
         languageToggle.addEventListener('click', () => {
@@ -106,6 +107,22 @@ if (isBrowser) {
             if (typeof renderCalendar === 'function') renderCalendar();
             if (typeof renderNotes === 'function') renderNotes();
             if (typeof renderFinancialRecords === 'function') renderFinancialRecords();
+        });
+    }
+
+    // Dark Mode Toggle
+    const darkModeToggle = document.getElementById('darkModeToggle');
+    if (darkModeToggle) {
+        const isDarkMode = localStorage.getItem('darkMode') === 'true';
+        if (isDarkMode) {
+            document.body.classList.add('dark-mode');
+            darkModeToggle.textContent = isNepali ? 'लाइट मोड' : 'Light Mode';
+        }
+        darkModeToggle.addEventListener('click', () => {
+            document.body.classList.toggle('dark-mode');
+            const isDark = document.body.classList.contains('dark-mode');
+            localStorage.setItem('darkMode', isDark);
+            darkModeToggle.textContent = isDark ? (isNepali ? 'लाइट मोड' : 'Light Mode') : (isNepali ? 'डार्क मोड' : 'Dark Mode');
         });
     }
 
