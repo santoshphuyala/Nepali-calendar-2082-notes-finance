@@ -1,326 +1,204 @@
-const addNote = document.getElementById('addNote');
-const viewNotes = document.getElementById('viewNotes');
-const notesModal = typeof bootstrap !== 'undefined' ? new bootstrap.Modal(document.getElementById('notesModal')) : null;
-const notesList = document.getElementById('notesList');
-const noteSearch = document.getElementById('noteSearch');
-const monthFilter = document.getElementById('monthFilter');
-const clearNotesButton = document.getElementById('clearNotes');
-const noteFormModal = typeof bootstrap !== 'undefined' ? new bootstrap.Modal(document.getElementById('noteFormModal')) : null;
+let filteredNotes = [];
+let editIndex = null;
 
 function renderNotes() {
+    const notesList = document.getElementById('notesList');
+    const monthFilter = document.getElementById('monthFilter');
     if (!notesList || !monthFilter) {
-        console.error('notesList or monthFilter element not found');
+        console.error('Required elements for rendering notes not found');
         return;
     }
-    let filteredNotes = notes.filter(note => note.type === 'note');
-    if (noteSearch && noteSearch.value) {
-        filteredNotes = filteredNotes.filter(note =>
-            note.title.toLowerCase().includes(noteSearch.value.toLowerCase()) ||
-            note.description.toLowerCase().includes(noteSearch.value.toLowerCase())
-        );
+
+    notesList.innerHTML = '';
+    filteredNotes = notes.filter(note => {
+        const noteMonth = note.date.split('-')[1];
+        return monthFilter.value === 'all' || noteMonth === monthFilter.value;
+    });
+
+    const searchQuery = document.getElementById('noteSearch')?.value.toLowerCase() || '';
+    filteredNotes = filteredNotes.filter(note =>
+        note.title.toLowerCase().includes(searchQuery) ||
+        note.description.toLowerCase().includes(searchQuery)
+    );
+
+    if (filteredNotes.length === 0) {
+        notesList.innerHTML = `<p data-en="No notes found" data-ne="कुनै नोटहरू फेला परेन">No notes found</p>`;
+        return;
     }
 
-    let groupedByMonth = {};
-    filteredNotes.forEach(note => {
-        getRecurringDates(note).forEach(date => {
-            let [year, month, day] = date.split('-').map(Number);
-            let monthKey = `${year}-${month}`;
-            if (!groupedByMonth[monthKey]) {
-                groupedByMonth[monthKey] = [];
-            }
-            groupedByMonth[monthKey].push({ date, note, day });
+    filteredNotes.forEach((note, index) => {
+        const dates = getRecurringDates(note);
+        dates.forEach(date => {
+            const noteDiv = document.createElement('div');
+            noteDiv.className = 'note-item card mb-2 p-3';
+            noteDiv.innerHTML = `
+                <h5>${note.title} (${date})</h5>
+                <p>${note.description}</p>
+                <p><small>${note.time || ''}</small></p>
+                <button class="btn btn-sm btn-warning edit-note" data-index="${index}" data-date="${date}" data-en="Edit" data-ne="सम्पादन गर्नुहोस्">Edit</button>
+                <button class="btn btn-sm btn-danger delete-note ms-2" data-index="${index}" data-date="${date}" data-en="Delete" data-ne="मेटाउनुहोस्">Delete</button>
+            `;
+            notesList.appendChild(noteDiv);
         });
     });
 
-    let html = '';
-    for (let monthKey in groupedByMonth) {
-        let [year, month] = monthKey.split('-').map(Number);
-        month--;
-        if (monthFilter.value !== 'all' && monthFilter.value !== `${year}-${month + 1}`) continue;
-
-        html += `<li><strong>${isNepali ? monthsNepali[month] : calendarData[year][month].name} ${year}</strong></li>`;
-        groupedByMonth[monthKey].sort((a, b) => a.day - b.day).forEach(entry => {
-            let note = entry.note;
-            html += `
-                <li class="mb-2">
-                    <strong>${entry.date}</strong>: ${note.title}
-                    <br>${note.description ? note.description : ''}
-                    ${note.time ? `<br>${isNepali ? 'समय' : 'Time'}: ${note.time}` : ''}
-                    <br>
-                    <button class="btn btn-sm btn-warning edit-note" data-date="${entry.date}" data-title="${note.title}">${isNepali ? 'सम्पादन' : 'Edit'}</button>
-                    <button class="btn btn-sm btn-danger delete-note" data-date="${entry.date}" data-title="${note.title}">${isNepali ? 'मेटाउनुहोस्' : 'Delete'}</button>
-                </li>
-            `;
-        });
-    }
-    notesList.innerHTML = html;
-
     document.querySelectorAll('.edit-note').forEach(button => {
-        button.addEventListener('click', () => {
-            let date = button.dataset.date;
-            let title = button.dataset.title;
-            let note = notes.find(n => n.date === date && n.title === title);
-            if (note) {
-                document.getElementById('selectedDate').textContent = date;
-                document.getElementById('entryType').value = 'note';
+        button.addEventListener('click', (e) => {
+            try {
+                const idx = parseInt(e.target.dataset.index);
+                editIndex = idx;
+                const note = notes[idx];
                 document.getElementById('noteTitle').value = note.title;
-                document.getElementById('noteDescription').value = note.description || '';
+                document.getElementById('noteDescription').value = note.description;
                 document.getElementById('noteTime').value = note.time || '';
-                document.getElementById('recurring').checked = note.recurring || false;
-                document.getElementById('reminder').checked = note.reminder || false;
-                document.getElementById('entryCategory').style.display = 'none';
-                document.getElementById('categoryManager').style.display = 'none';
-                document.getElementById('budgetSection').style.display = 'none';
+                document.getElementById('recurring').checked = note.recurring;
+                document.getElementById('reminder').checked = note.reminder;
+                document.getElementById('selectedDate').textContent = note.date;
+                const noteFormModal = new bootstrap.Modal(document.getElementById('noteFormModal'));
                 noteFormModal.show();
+            } catch (error) {
+                console.error('Error editing note:', error);
             }
         });
     });
 
     document.querySelectorAll('.delete-note').forEach(button => {
-        button.addEventListener('click', () => {
-            let date = button.dataset.date;
-            let title = button.dataset.title;
-            let note = notes.find(n => n.date === date && n.title === title);
-            if (note) {
-                history.push({ type: 'delete', note });
-                notes = notes.filter(n => n !== note);
-                localStorage.setItem('notes', JSON.stringify(notes));
-                localStorage.setItem('history', JSON.stringify(history));
-                renderNotes();
-                if (typeof renderCalendar === 'function') renderCalendar();
+        button.addEventListener('click', (e) => {
+            try {
+                const idx = parseInt(e.target.dataset.index);
+                if (confirm(isNepali ? 'के तपाईं यो नोट मेटाउन चाहनुहुन्छ?' : 'Are you sure you want to delete this note?')) {
+                    notes.splice(idx, 1);
+                    localStorage.setItem('notes', JSON.stringify(notes));
+                    renderNotes();
+                }
+            } catch (error) {
+                console.error('Error deleting note:', error);
             }
         });
     });
 }
 
-if (monthFilter) {
-    for (let y = 2081; y <= 2083; y++) {
-        calendarData[y].forEach((month, index) => {
-            let option = document.createElement('option');
-            option.value = `${y}-${index + 1}`;
-            option.textContent = `${isNepali ? monthsNepali[index] : month.name} ${y}`;
-            monthFilter.appendChild(option);
-        });
+function saveNote() {
+    try {
+        const noteTitle = document.getElementById('noteTitle').value;
+        const noteDescription = document.getElementById('noteDescription').value;
+        const noteTime = document.getElementById('noteTime').value;
+        const recurring = document.getElementById('recurring').checked;
+        const reminder = document.getElementById('reminder').checked;
+        const date = document.getElementById('selectedDate').textContent;
+
+        if (!noteTitle || !date) {
+            alert(isNepali ? 'कृपया शीर्षक र मिति भर्नुहोस्' : 'Please fill in the title and date');
+            return;
+        }
+
+        const note = { title: noteTitle, description: noteDescription, time: noteTime, recurring, reminder, date };
+
+        if (editIndex !== null) {
+            notes[editIndex] = note;
+            editIndex = null;
+        } else {
+            notes.push(note);
+        }
+
+        localStorage.setItem('notes', JSON.stringify(notes));
+        if (reminder) {
+            scheduleNotification(note);
+        }
+        renderNotes();
+        const noteFormModal = bootstrap.Modal.getInstance(document.getElementById('noteFormModal'));
+        noteFormModal.hide();
+    } catch (error) {
+        console.error('Error saving note:', error);
     }
-    monthFilter.addEventListener('change', renderNotes);
-}
-
-if (addNote) {
-    addNote.addEventListener('click', () => {
-        try {
-            document.getElementById('entryType').value = 'note';
-            document.getElementById('noteTitle').placeholder = isNepali ? 'शीर्षक' : 'Title';
-            document.getElementById('entryCategory').style.display = 'none';
-            document.getElementById('categoryManager').style.display = 'none';
-            document.getElementById('budgetSection').style.display = 'none';
-            noteFormModal.show();
-        } catch (error) {
-            console.error('Error in addNote click handler:', error);
-        }
-    });
-}
-
-if (viewNotes) {
-    viewNotes.addEventListener('click', () => {
-        try {
-            notesModal.show();
-            renderNotes();
-        } catch (error) {
-            console.error('Error in viewNotes click handler:', error);
-        }
-    });
-}
-
-if (noteSearch) {
-    noteSearch.addEventListener('input', debounce(renderNotes, 300));
-}
-
-if (clearNotesButton) {
-    clearNotesButton.addEventListener('click', () => {
-        try {
-            history.push({ type: 'clear', notes: [...notes] });
-            notes = notes.filter(note => note.type !== 'note');
-            localStorage.setItem('notes', JSON.stringify(notes));
-            localStorage.setItem('history', JSON.stringify(history));
-            renderNotes();
-            if (typeof renderCalendar === 'function') renderCalendar();
-        } catch (error) {
-            console.error('Error in clearNotesButton click handler:', error);
-        }
-    });
 }
 
 function exportNotesToExcel() {
-    if (typeof XLSX === 'undefined') {
-        console.error('XLSX library not loaded');
-        return;
+    try {
+        const ws = XLSX.utils.json_to_sheet(filteredNotes);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Notes');
+        XLSX.writeFile(wb, 'notes.xlsx');
+    } catch (error) {
+        console.error('Error exporting notes to Excel:', error);
     }
-    let headers = isNepali
-        ? ['मिति', 'शीर्षक', 'विवरण']
-        : ['Date', 'Title', 'Description'];
-    let data = notes.filter(note => note.type === 'note')
-        .flatMap(note => getRecurringDates(note).map(date => [
-            date,
-            note.title,
-            note.description || ''
-        ]));
-    let ws = XLSX.utils.aoa_to_sheet([headers, ...data]);
-    let wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, isNepali ? 'नोटहरू' : 'Notes');
-    XLSX.writeFile(wb, `Notes_${new Date().toISOString().split('T')[0]}.xlsx`);
 }
 
 function exportNotesToPDF() {
-    if (typeof window === 'undefined' || !window.jspdf) {
-        console.error('jsPDF library not loaded');
-        return;
+    try {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        doc.text(isNepali ? 'नोटहरू' : 'Notes', 10, 10);
+        let y = 20;
+        filteredNotes.forEach((note, index) => {
+            doc.text(`${index + 1}. ${note.title} (${note.date})`, 10, y);
+            doc.text(note.description, 10, y + 5);
+            y += 15;
+            if (y > 280) {
+                doc.addPage();
+                y = 10;
+            }
+        });
+        doc.save('notes.pdf');
+    } catch (error) {
+        console.error('Error exporting notes to PDF:', error);
     }
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
-    let headers = isNepali
-        ? ['मिति', 'शीर्षक', 'विवरण']
-        : ['Date', 'Title', 'Description'];
-    let data = notes.filter(note => note.type === 'note')
-        .flatMap(note => getRecurringDates(note).map(date => [
-            date,
-            note.title,
-            note.description || ''
-        ]));
-    doc.text(isNepali ? 'नोटहरू' : 'Notes', 14, 20);
-    doc.autoTable({
-        startY: 30,
-        head: [headers],
-        body: data,
-        styles: { fontSize: 8, cellPadding: 2 },
-        headStyles: { fillColor: [2, 136, 209] },
-        alternateRowStyles: { fillColor: [240, 240, 240] }
-    });
-    doc.save(`Notes_${new Date().toISOString().split('T')[0]}.pdf`);
 }
 
-function importNotesData() {
-    if (typeof document === 'undefined') {
-        console.error('document not available');
-        return;
-    }
-    let input = document.createElement('input');
-    input.type = 'file';
-    input.accept = '.json';
-    input.onchange = function (e) {
-        let file = e.target.files[0];
-        if (!file) return;
-        let reader = new FileReader();
-        reader.onload = function (e) {
-            try {
-                let importedNotes = JSON.parse(e.target.result);
-                importedNotes.forEach(note => {
-                    if (note.type === 'note') {
-                        notes.push(note);
-                    }
-                });
-                localStorage.setItem('notes', JSON.stringify(notes));
-                renderNotes();
-                if (typeof renderCalendar === 'function') renderCalendar();
-                alert(isNepali ? 'नोटहरू सफलतापूर्वक आयात गरियो' : 'Notes imported successfully');
-            } catch (err) {
-                alert(isNepali ? 'आयात असफल: अमान्य फाइल ढाँचा' : 'Import failed: Invalid file format');
-            }
+function importNotesData(event) {
+    try {
+        const file = event.target.files[0];
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const data = JSON.parse(e.target.result);
+            notes = data;
+            localStorage.setItem('notes', JSON.stringify(notes));
+            renderNotes();
+            checkUpcomingReminders();
         };
         reader.readAsText(file);
-    };
-    input.click();
+    } catch (error) {
+        console.error('Error importing notes:', error);
+    }
 }
 
-if (typeof document !== 'undefined') {
-    document.querySelectorAll('.excel-option').forEach(option => {
-        option.addEventListener('click', (e) => {
-            e.preventDefault();
-            if (option.dataset.type === 'note') exportNotesToExcel();
-        });
-    });
-
-    document.querySelectorAll('.pdf-option').forEach(option => {
-        option.addEventListener('click', (e) => {
-            e.preventDefault();
-            if (option.dataset.type === 'note') exportNotesToPDF();
-        });
-    });
-
-    document.querySelectorAll('.import-option').forEach(option => {
-        option.addEventListener('click', (e) => {
-            e.preventDefault();
-            if (option.dataset.type === 'note') importNotesData();
-        });
-    });
-}
-
-const saveNoteButton = document.getElementById('saveNote');
-const editEntryButton = document.getElementById('editEntry');
-if (saveNoteButton) {
-    saveNoteButton.addEventListener('click', () => {
-        try {
-            let date = document.getElementById('selectedDate').textContent;
-            let type = document.getElementById('entryType').value;
-            let title = document.getElementById('noteTitle').value;
-            let description = document.getElementById('noteDescription').value;
-            let category = document.getElementById('entryCategory').value;
-            let time = document.getElementById('noteTime').value;
-            let recurring = document.getElementById('recurring').checked;
-            let reminder = document.getElementById('reminder').checked;
-
-            if (!title) {
-                alert(isNepali ? 'कृपया शीर्षक/रकम प्रविष्ट गर्नुहोस्' : 'Please enter a title/amount');
-                return;
-            }
-
-            let note = { date, type, title, description, category, time, recurring, reminder };
-            history.push({ type: 'add', note });
-            notes.push(note);
+function clearNotes() {
+    try {
+        if (confirm(isNepali ? 'के तपाईं सबै नोटहरू मेटाउन चाहनुहुन्छ?' : 'Are you sure you want to clear all notes?')) {
+            notes = [];
             localStorage.setItem('notes', JSON.stringify(notes));
-            localStorage.setItem('history', JSON.stringify(history));
-            noteFormModal.hide();
-            if (typeof renderCalendar === 'function') renderCalendar();
-            if (typeof renderNotes === 'function') renderNotes();
-            if (typeof renderFinancialRecords === 'function') renderFinancialRecords();
-            if (typeof renderMonthlySummary === 'function') renderMonthlySummary();
-        } catch (error) {
-            console.error('Error in saveNoteButton click handler:', error);
+            renderNotes();
         }
-    });
+    } catch (error) {
+        console.error('Error clearing notes:', error);
+    }
 }
 
-if (editEntryButton) {
-    editEntryButton.addEventListener('click', () => {
-        try {
-            let date = document.getElementById('selectedDate').textContent;
-            let type = document.getElementById('entryType').value;
-            let title = document.getElementById('noteTitle').value;
-            let description = document.getElementById('noteDescription').value;
-            let category = document.getElementById('entryCategory').value;
-            let time = document.getElementById('noteTime').value;
-            let recurring = document.getElementById('recurring').checked;
-            let reminder = document.getElementById('reminder').checked;
-
-            let existingNote = notes.find(note => note.date === date && note.title === document.getElementById('noteTitle').value);
-            if (existingNote) {
-                history.push({ type: 'edit', note: { ...existingNote }, oldNote: { ...existingNote } });
-                existingNote.type = type;
-                existingNote.title = title;
-                existingNote.description = description;
-                existingNote.category = category;
-                existingNote.time = time;
-                existingNote.recurring = recurring;
-                existingNote.reminder = reminder;
-                localStorage.setItem('notes', JSON.stringify(notes));
-                localStorage.setItem('history', JSON.stringify(history));
-                noteFormModal.hide();
-                if (typeof renderCalendar === 'function') renderCalendar();
-                if (typeof renderNotes === 'function') renderNotes();
-                if (typeof renderFinancialRecords === 'function') renderFinancialRecords();
-                if (typeof renderMonthlySummary === 'function') renderMonthlySummary();
-            }
-        } catch (error) {
-            console.error('Error in editEntryButton click handler:', error);
-        }
-    });
+if (document.getElementById('notesList')) {
+    renderNotes();
 }
+
+document.getElementById('noteSearch')?.addEventListener('input', debounce(renderNotes, 300));
+document.getElementById('monthFilter')?.addEventListener('change', renderNotes);
+document.getElementById('saveNote')?.addEventListener('click', saveNote);
+document.getElementById('editEntry')?.addEventListener('click', saveNote);
+document.getElementById('clearNotes')?.addEventListener('click', clearNotes);
+document.querySelectorAll('.excel-option')?.forEach(option => {
+    option.addEventListener('click', (e) => {
+        if (e.target.dataset.type === 'note') exportNotesToExcel();
+    });
+});
+document.querySelectorAll('.pdf-option')?.forEach(option => {
+    option.addEventListener('click', (e) => {
+        if (e.target.dataset.type === 'note') exportNotesToPDF();
+    });
+});
+document.querySelectorAll('.import-option')?.forEach(option => {
+    if (option.dataset.type === 'note') {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.json';
+        input.addEventListener('change', importNotesData);
+        input.click();
+    }
+});
