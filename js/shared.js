@@ -1,162 +1,169 @@
-// Shared state and utilities
+// Shared state
 let currentYear = 2082;
 let currentMonthIndex = 0;
 let isNepali = false;
 let notes = JSON.parse(localStorage.getItem('notes')) || [];
-let customCategories = JSON.parse(localStorage.getItem('customCategories')) || [];
 let budgets = JSON.parse(localStorage.getItem('budgets')) || {};
-let editingNoteIndex = null;
+let customCategories = JSON.parse(localStorage.getItem('customCategories')) || [];
 let undoStack = [];
 
-const monthsNepali = ['बैशाख', 'जेठ', 'असार', 'श्रावण', 'भदौ', 'आश्विन', 'कार्तिक', 'मंसिर', 'पौष', 'माघ', 'फाल्गुन', 'चैत'];
-const daysNepali = ['आइतबार', 'सोमबार', 'मंगलबार', 'बुधबार', 'बिहीबार', 'शुक्रबार', 'शनिबार'];
-const daysEnglish = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+// Calendar data for 2081, 2082, 2083
+const calendarData = {
+    2081: [
+        { name: "Baisakh", days: 31, gregStart: "2024-04-13", holidays: [{ day: 1, name: "Nepali New Year" }, { day: 5, name: "Buddha Jayanti" }] },
+        { name: "Jestha", days: 32, gregStart: "2024-05-14", holidays: [] },
+        { name: "Asar", days: 31, gregStart: "2024-06-15", holidays: [] },
+        { name: "Shrawan", days: 32, gregStart: "2024-07-16", holidays: [{ day: 10, name: "Janai Purnima" }] },
+        { name: "Bhadra", days: 31, gregStart: "2024-08-17", holidays: [] },
+        { name: "Asoj", days: 30, gregStart: "2024-09-17", holidays: [{ day: 20, name: "Dashain" }] },
+        { name: "Kartik", days: 30, gregStart: "2024-10-17", holidays: [{ day: 5, name: "Tihar" }] },
+        { name: "Mangsir", days: 29, gregStart: "2024-11-16", holidays: [] },
+        { name: "Poush", days: 29, gregStart: "2024-12-15", holidays: [] },
+        { name: "Magh", days: 29, gregStart: "2025-01-13", holidays: [] },
+        { name: "Falgun", days: 30, gregStart: "2025-02-11", holidays: [{ day: 15, name: "Holi" }] },
+        { name: "Chaitra", days: 30, gregStart: "2025-03-13", holidays: [] },
+    ],
+    2082: [
+        { name: "Baisakh", days: 31, gregStart: "2025-04-13", holidays: [{ day: 1, name: "Nepali New Year" }, { day: 5, name: "Buddha Jayanti" }] },
+        { name: "Jestha", days: 32, gregStart: "2025-05-14", holidays: [] },
+        { name: "Asar", days: 31, gregStart: "2025-06-15", holidays: [] },
+        { name: "Shrawan", days: 32, gregStart: "2025-07-16", holidays: [{ day: 10, name: "Janai Purnima" }] },
+        { name: "Bhadra", days: 31, gregStart: "2025-08-17", holidays: [] },
+        { name: "Asoj", days: 30, gregStart: "2025-09-17", holidays: [{ day: 20, name: "Dashain" }] },
+        { name: "Kartik", days: 30, gregStart: "2025-10-17", holidays: [{ day: 5, name: "Tihar" }] },
+        { name: "Mangsir", days: 29, gregStart: "2025-11-16", holidays: [] },
+        { name: "Poush", days: 29, gregStart: "2025-12-15", holidays: [] },
+        { name: "Magh", days: 30, gregStart: "2026-01-13", holidays: [] },
+        { name: "Falgun", days: 30, gregStart: "2026-02-12", holidays: [{ day: 15, name: "Holi" }] },
+        { name: "Chaitra", days: 30, gregStart: "2026-03-14", holidays: [] },
+    ],
+    2083: [
+        { name: "Baisakh", days: 31, gregStart: "2026-04-13", holidays: [{ day: 1, name: "Nepali New Year" }, { day: 5, name: "Buddha Jayanti" }] },
+        { name: "Jestha", days: 32, gregStart: "2026-05-14", holidays: [] },
+        { name: "Asar", days: 32, gregStart: "2026-06-15", holidays: [] },
+        { name: "Shrawan", days: 31, gregStart: "2026-07-17", holidays: [{ day: 10, name: "Janai Purnima" }] },
+        { name: "Bhadra", days: 31, gregStart: "2026-08-17", holidays: [] },
+        { name: "Asoj", days: 30, gregStart: "2026-09-17", holidays: [{ day: 20, name: "Dashain" }] },
+        { name: "Kartik", days: 30, gregStart: "2026-10-17", holidays: [{ day: 5, name: "Tihar" }] },
+        { name: "Mangsir", days: 29, gregStart: "2026-11-16", holidays: [] },
+        { name: "Poush", days: 29, gregStart: "2026-12-15", holidays: [] },
+        { name: "Magh", days: 30, gregStart: "2027-01-13", holidays: [] },
+        { name: "Falgun", days: 30, gregStart: "2027-02-12", holidays: [{ day: 15, name: "Holi" }] },
+        { name: "Chaitra", days: 30, gregStart: "2027-03-14", holidays: [] },
+    ],
+};
 
-// DOM elements shared across modules
-const yearFilter = document.getElementById('yearFilter');
-const todayButton = document.getElementById('todayButton');
-const languageToggle = document.getElementById('languageToggle');
-const backupData = document.getElementById('backupData');
-const restoreData = document.getElementById('restoreData');
-const restoreFileInput = document.getElementById('restoreFileInput');
-const undoAction = document.getElementById('undoAction');
-const noteFormModal = new bootstrap.Modal(document.getElementById('noteFormModal'));
-const entryType = document.getElementById('entryType');
-const noteTitle = document.getElementById('noteTitle');
-const noteTime = document.getElementById('noteTime');
-const noteDescription = document.getElementById('noteDescription');
-const entryCategory = document.getElementById('entryCategory');
-const newCategory = document.getElementById('newCategory');
-const addCategory = document.getElementById('addCategory');
-const categoryManager = document.getElementById('categoryManager');
-const budgetSection = document.getElementById('budgetSection');
-const monthlyBudget = document.getElementById('monthlyBudget');
-const recurring = document.getElementById('recurring');
-const reminder = document.getElementById('reminder');
-const saveNote = document.getElementById('saveNote');
-const editEntry = document.getElementById('editEntry');
-const closeEntry = document.getElementById('closeEntry');
-const selectedDate = document.getElementById('selectedDate');
-const todayNepaliDate = document.getElementById('todayNepaliDate');
-const todayEnglishDate = document.getElementById('todayEnglishDate');
+const monthsNepali = [
+    "वैशाख", "जेठ", "असार", "साउन", "भदौ", "असोज",
+    "कात्तिक", "मंसिर", "पुस", "माघ", "फागुन", "चैत"
+];
 
 // Utility functions
 function debounce(func, wait) {
     let timeout;
-    return function executedFunction(...args) {
+    return function (...args) {
         clearTimeout(timeout);
-        timeout = setTimeout(() => func(...args), wait);
+        timeout = setTimeout(() => func.apply(this, args), wait);
     };
 }
 
-function getBSDateFromGregorian(date) {
-    try {
-        for (let year in calendarData) {
-            for (let i = 0; i < calendarData[year].length; i++) {
-                let month = calendarData[year][i];
-                let startDate = new Date(month.gregStart);
-                let endDate = new Date(startDate);
-                endDate.setDate(startDate.getDate() + month.days - 1);
-                if (date >= startDate && date <= endDate) {
-                    let dayDiff = Math.floor((date - startDate) / (1000 * 60 * 60 * 24)) + 1;
-                    return { year: parseInt(year), month: i, day: dayDiff };
-                }
-            }
+function getBSDateFromGregorian(gregDate) {
+    const refDate = new Date("2025-04-13");
+    const refBSDate = { year: 2082, month: 0, day: 1 };
+    const diffDays = Math.floor((gregDate - refDate) / (1000 * 60 * 60 * 24));
+    let bsYear = refBSDate.year;
+    let bsMonth = refBSDate.month;
+    let bsDay = refBSDate.day + diffDays;
+
+    while (bsDay > calendarData[bsYear][bsMonth].days) {
+        bsDay -= calendarData[bsYear][bsMonth].days;
+        bsMonth++;
+        if (bsMonth > 11) {
+            bsMonth = 0;
+            bsYear++;
         }
-        return null;
-    } catch (err) {
-        console.error('Error in getBSDateFromGregorian:', err);
-        return null;
     }
+    while (bsDay <= 0) {
+        bsMonth--;
+        if (bsMonth < 0) {
+            bsMonth = 11;
+            bsYear--;
+        }
+        bsDay += calendarData[bsYear][bsMonth].days;
+    }
+    return { year: bsYear, month: bsMonth, day: bsDay };
 }
 
-function getGregorianDate(year, monthIndex, day) {
-    try {
-        let month = calendarData[year][monthIndex];
-        let startDate = new Date(month.gregStart);
-        startDate.setDate(startDate.getDate() + day - 1);
-        return startDate;
-    } catch (err) {
-        console.error('Error in getGregorianDate:', err);
-        return new Date();
+function getGregorianDate(bsYear, bsMonth, bsDay) {
+    const refDate = new Date("2025-04-13");
+    let totalDays = 0;
+    for (let year = 2082; year < bsYear; year++) {
+        totalDays += calendarData[year].reduce((sum, month) => sum + month.days, 0);
     }
-}
+    for (let month = 0; month < bsMonth; month++) {
+        totalDays += calendarData[bsYear][month].days;
+    }
+    totalDays += bsDay - 1;
 
-function formatDate(date) {
-    return date.toISOString().split('T')[0];
+    const gregDate = new Date(refDate);
+    gregDate.setDate(gregDate.getDate() + totalDays);
+    return gregDate;
 }
 
 function getRecurringDates(note) {
-    if (!note.recurring) return [note.date];
     let dates = [];
-    let [startYear, startMonth, startDay] = note.date.split('-').map(Number);
-    startMonth--;
-    for (let year = startYear; year <= 2083; year++) {
-        for (let month = (year === startYear ? startMonth : 0); month < 12; month++) {
-            if (calendarData[year][month].days >= startDay) {
-                dates.push(`${year}-${String(month + 1).padStart(2, '0')}-${String(startDay).padStart(2, '0')}`);
+    let [year, month, day] = note.date.split('-').map(Number);
+    month--;
+    if (note.recurring) {
+        for (let y = 2081; y <= 2083; y++) {
+            if (calendarData[y][month].days >= day) {
+                dates.push(`${y}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`);
             }
         }
+    } else {
+        dates.push(note.date);
     }
     return dates;
 }
 
 function toggleLanguage() {
     isNepali = !isNepali;
-    document.querySelectorAll('[data-en]').forEach(elem => {
+    localStorage.setItem('isNepali', isNepali);
+    document.querySelectorAll('[data-en][data-ne]').forEach(elem => {
         elem.textContent = isNepali ? elem.dataset.ne : elem.dataset.en;
     });
-    renderMonthTabs();
+    document.querySelectorAll('option[data-en][data-ne]').forEach(option => {
+        option.textContent = isNepali ? option.dataset.ne : option.dataset.en;
+    });
     renderCalendar();
     renderNotesList();
     renderFinancialRecords();
-    renderReport('weekly');
+    renderMonthlySummary();
 }
 
-function backup() {
-    let data = {
-        notes,
-        customCategories,
-        budgets
-    };
-    let blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
-    let url = URL.createObjectURL(blob);
-    let a = document.createElement('a');
-    a.href = url;
-    a.download = `calendar_backup_${new Date().toISOString().split('T')[0]}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-}
-
-function restore(e) {
-    let file = e.target.files[0];
-    if (!file) return;
-    let reader = new FileReader();
-    reader.onload = function(e) {
-        try {
-            let data = JSON.parse(e.target.result);
-            if (data.notes) notes = data.notes;
-            if (data.customCategories) customCategories = data.customCategories;
-            if (data.budgets) budgets = data.budgets;
-            localStorage.setItem('notes', JSON.stringify(notes));
-            localStorage.setItem('customCategories', JSON.stringify(customCategories));
-            localStorage.setItem('budgets', JSON.stringify(budgets));
-            renderCalendar();
-            renderNotesList();
-            renderFinancialRecords();
-            renderMonthlySummary();
-            populateCategories();
-            alert(isNepali ? 'डेटा सफलतापूर्वक पुनर्स्थापना गरियो' : 'Data restored successfully');
-        } catch (err) {
-            alert(isNepali ? 'पुनर्स्थापना असफल: अमान्य फाइल ढाँचा' : 'Restore failed: Invalid file format');
-        }
-    };
-    reader.readAsText(file);
+// Undo last action
+function undoLastAction() {
+    if (undoStack.length === 0) {
+        alert(isNepali ? 'पुर्ववत गर्न कुनै कार्य छैन' : 'No actions to undo');
+        return;
+    }
+    let lastAction = undoStack.pop();
+    if (lastAction.action === 'add') {
+        notes = notes.filter(n => n !== lastAction.note);
+    } else if (lastAction.action === 'edit') {
+        notes[lastAction.index] = lastAction.oldNote;
+    } else if (lastAction.action === 'delete') {
+        notes.splice(lastAction.index, 0, lastAction.note);
+    } else if (lastAction.action === 'clear') {
+        notes.push(...lastAction.notes);
+    }
+    localStorage.setItem('notes', JSON.stringify(notes));
+    renderCalendar();
+    renderNotesList();
+    renderFinancialRecords();
+    renderMonthlySummary();
 }
 
 // Shared event listeners
-languageToggle.addEventListener('click', toggleLanguage);
-backupData.addEventListener('click', backup);
-restoreData.addEventListener('click', () => restoreFileInput.click());
-restoreFileInput.addEventListener('change', restore);
-undoAction.addEventListener('click', undoLastAction);
+document.getElementById('languageToggle').addEventListener('click', toggleLanguage);
+document.getElementById('undoAction').addEventListener('click', undoLastAction);
