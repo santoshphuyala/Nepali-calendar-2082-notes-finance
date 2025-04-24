@@ -1,43 +1,4 @@
-<script type="text/javascript">
-        var gk_isXlsx = false;
-        var gk_xlsxFileLookup = {};
-        var gk_fileData = {};
-        function filledCell(cell) {
-          return cell !== '' && cell != null;
-        }
-        function loadFileData(filename) {
-        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
-            try {
-                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
-                var firstSheetName = workbook.SheetNames[0];
-                var worksheet = workbook.Sheets[firstSheetName];
-
-                // Convert sheet to JSON to filter blank rows
-                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
-                // Filter out blank rows (rows where all cells are empty, null, or undefined)
-                var filteredData = jsonData.filter(row => row.some(filledCell));
-
-                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
-                var headerRowIndex = filteredData.findIndex((row, index) =>
-                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
-                );
-                // Fallback
-                if (headerRowIndex === -1 || headerRowIndex > 25) {
-                  headerRowIndex = 0;
-                }
-
-                // Convert filtered JSON back to CSV
-                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
-                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
-                return csv;
-            } catch (e) {
-                console.error(e);
-                return "";
-            }
-        }
-        return gk_fileData[filename] || "";
-        }
-        </script><!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -45,7 +6,7 @@
     <meta name="referrer" content="strict-origin-when-cross-origin">
     <meta http-equiv="Content-Security-Policy" content="
         default-src 'self';
-        script-src 'self' 'nonce-OGY1ZmVhYWEtOGRlNy00YjRhLTk4NzEtNjY2OWU2MGNiN2Y2' 'strict-dynamic' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net;
+        script-src 'self' 'nonce-OGY1ZmVhYWEtOGRlNy00YjJhLTk4NzEtNjY2OWU2MGNiN2Y2' 'strict-dynamic' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net;
         img-src 'self' blob: data: https://assets.grok.com https://imgs.search.brave.com;
         style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net;
         font-src 'self' https://fonts.gstatic.com;
@@ -55,8 +16,8 @@
     <link rel="icon" href="data:;base64,iVBORw0KGgo=">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&family=Noto+Sans+Devanagari:wght@400;600&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="/css/shared.css">
-    <link rel="stylesheet" href="/css/calendar.css">
+    <link rel="stylesheet" href="css/shared.css">
+    <link rel="stylesheet" href="css/calendar.css">
 </head>
 <body>
     <header class="bg-gradient-primary text-white text-center">
@@ -96,52 +57,66 @@
                 <option value="2082" selected>2082 BS</option>
                 <option value="2083">2083 BS</option>
             </select>
-            <button id="todayButton" class="btn btn-primary" data-en="Today" data-ne="आज" aria-label="Go to Today">Today</button>
             <button id="addNote" class="btn btn-primary" data-en="Add Note" data-ne="नोट थप्नुहोस्" aria-label="Add Note">Add Note</button>
-            <button id="addFinance" class="btn btn-success" data-en="Add Finance" data-ne="वित्त थप्नुहोस्" aria-label="Add Finance">Add Finance</button>
             <div class="dropdown">
                 <button class="btn btn-success dropdown-toggle" data-bs-toggle="dropdown" data-en="Excel Export" data-ne="एक्सेल निर्यात" aria-label="Excel Export" aria-expanded="false">Excel Export</button>
                 <ul class="dropdown-menu">
-                    <li><a class="dropdown-item excel-option" href="#" data-type="calendar" data-en="Monthly Calendar" data-ne="मासिक पात्रो">Monthly Calendar</a></li>
-                    <li><a class="dropdown-item excel-option" href="#" data-type="holiday" data-en="Yearly Holiday" data-ne="वार्षिक बिदा">Yearly Holiday</a></li>
+                    <li><a class="dropdown-item excel-option" href="#" data-type="calendar" data-en="Calendar" data-ne="पात्रो">Calendar</a></li>
+                    <li><a class="dropdown-item excel-option" href="#" data-type="holidays" data-en="Holidays" data-ne="बिदाहरू">Holidays</a></li>
                 </ul>
             </div>
             <div class="dropdown">
                 <button class="btn btn-danger dropdown-toggle" data-bs-toggle="dropdown" data-en="PDF Export" data-ne="PDF निर्यात" aria-label="PDF Export" aria-expanded="false">PDF Export</button>
                 <ul class="dropdown-menu">
-                    <li><a class="dropdown-item pdf-option" href="#" data-type="calendar" data-en="Monthly Calendar" data-ne="मासिक पात्रो">Monthly Calendar</a></li>
+                    <li><a class="dropdown-item pdf-option" href="#" data-type="calendar" data-en="Calendar" data-ne="पात्रो">Calendar</a></li>
+                    <li><a class="dropdown-item pdf-option" href="#" data-type="holidays" data-en="Holidays" data-ne="बिदाहरू">Holidays</a></li>
                 </ul>
             </div>
-            <div class="dropdown">
-                <button class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown" data-en="Import" data-ne="आयात" aria-label="Import Data" aria-expanded="false">Import</button>
-                <ul class="dropdown-menu">
-                    <li><a class="dropdown-item import-option" href="#" data-type="calendar" data-en="Monthly Calendar" data-ne="मासिक पात्रो">Monthly Calendar</a></li>
-                    <li><a class="dropdown-item import-option" href="#" data-type="holiday" data-en="Yearly Holiday" data-ne="वार्षिक बिदा">Yearly Holiday</a></li>
-                </ul>
-            </div>
-        </div>
-        <div class="today-date-row d-flex justify-content-center gap-3 mb-3">
-            <span id="todayNepaliDate" class="blink"></span>
-            <span id="todayEnglishDate" class="blink"></span>
         </div>
         <div class="language-toggle text-center mb-3">
             <button id="languageToggle" class="btn btn-outline-primary" data-en="Toggle Language (EN/NE)" data-ne="भाषा टगल गर्नुहोस् (EN/NE)" aria-label="Toggle Language">Toggle Language (EN/NE)</button>
             <button id="darkModeToggle" class="btn btn-outline-primary ms-2" data-en="Dark Mode" data-ne="डार्क मोड" aria-label="Toggle Dark Mode">Dark Mode</button>
         </div>
-        <div class="month-tabs d-flex flex-wrap justify-content-center gap-2 mb-3" id="monthTabs"></div>
-        <h2 id="currentMonth" class="text-center mb-3"></h2>
         <div class="row">
             <div class="col-12 col-md-8">
-                <div class="card">
+                <div class="card mb-4">
                     <div class="card-body">
-                        <div class="calendar-grid" id="calendarGrid" role="grid" aria-label="Calendar"></div>
+                        <h2 id="calendarTitle" data-en="Calendar 2082 BS" data-ne="पात्रो २०८२ BS">Calendar 2082 BS</h2>
+                        <ul class="nav nav-tabs" id="monthTabs" role="tablist">
+                            <li class="nav-item" role="presentation"><button class="nav-link active" id="baisakh-tab" data-bs-toggle="tab" data-bs-target="#baisakh" type="button" role="tab" data-en="Baisakh" data-ne="बैशाख">Baisakh</button></li>
+                            <li class="nav-item" role="presentation"><button class="nav-link" id="jestha-tab" data-bs-toggle="tab" data-bs-target="#jestha" type="button" role="tab" data-en="Jestha" data-ne="जेठ">Jestha</button></li>
+                            <li class="nav-item" role="presentation"><button class="nav-link" id="asar-tab" data-bs-toggle="tab" data-bs-target="#asar" type="button" role="tab" data-en="Asar" data-ne="असार">Asar</button></li>
+                            <li class="nav-item" role="presentation"><button class="nav-link" id="shrawan-tab" data-bs-toggle="tab" data-bs-target="#shrawan" type="button" role="tab" data-en="Shrawan" data-ne="श्रावण">Shrawan</button></li>
+                            <li class="nav-item" role="presentation"><button class="nav-link" id="bhadra-tab" data-bs-toggle="tab" data-bs-target="#bhadra" type="button" role="tab" data-en="Bhadra" data-ne="भाद्र">Bhadra</button></li>
+                            <li class="nav-item" role="presentation"><button class="nav-link" id="asoj-tab" data-bs-toggle="tab" data-bs-target="#asoj" type="button" role="tab" data-en="Asoj" data-ne="असोज">Asoj</button></li>
+                            <li class="nav-item" role="presentation"><button class="nav-link" id="kartik-tab" data-bs-toggle="tab" data-bs-target="#kartik" type="button" role="tab" data-en="Kartik" data-ne="कार्तिक">Kartik</button></li>
+                            <li class="nav-item" role="presentation"><button class="nav-link" id="mangsir-tab" data-bs-toggle="tab" data-bs-target="#mangsir" type="button" role="tab" data-en="Mangsir" data-ne="मंसिर">Mangsir</button></li>
+                            <li class="nav-item" role="presentation"><button class="nav-link" id="poush-tab" data-bs-toggle="tab" data-bs-target="#poush" type="button" role="tab" data-en="Poush" data-ne="पौष">Poush</button></li>
+                            <li class="nav-item" role="presentation"><button class="nav-link" id="magh-tab" data-bs-toggle="tab" data-bs-target="#magh" type="button" role="tab" data-en="Magh" data-ne="माघ">Magh</button></li>
+                            <li class="nav-item" role="presentation"><button class="nav-link" id="falgun-tab" data-bs-toggle="tab" data-bs-target="#falgun" type="button" role="tab" data-en="Falgun" data-ne="फाल्गुन">Falgun</button></li>
+                            <li class="nav-item" role="presentation"><button class="nav-link" id="chaitra-tab" data-bs-toggle="tab" data-bs-target="#chaitra" type="button" role="tab" data-en="Chaitra" data-ne="चैत्र">Chaitra</button></li>
+                        </ul>
+                        <div class="tab-content" id="monthTabContent">
+                            <div class="tab-pane fade show active" id="baisakh" role="tabpanel"></div>
+                            <div class="tab-pane fade" id="jestha" role="tabpanel"></div>
+                            <div class="tab-pane fade" id="asar" role="tabpanel"></div>
+                            <div class="tab-pane fade" id="shrawan" role="tabpanel"></div>
+                            <div class="tab-pane fade" id="bhadra" role="tabpanel"></div>
+                            <div class="tab-pane fade" id="asoj" role="tabpanel"></div>
+                            <div class="tab-pane fade" id="kartik" role="tabpanel"></div>
+                            <div class="tab-pane fade" id="mangsir" role="tabpanel"></div>
+                            <div class="tab-pane fade" id="poush" role="tabpanel"></div>
+                            <div class="tab-pane fade" id="magh" role="tabpanel"></div>
+                            <div class="tab-pane fade" id="falgun" role="tabpanel"></div>
+                            <div class="tab-pane fade" id="chaitra" role="tabpanel"></div>
+                        </div>
                     </div>
                 </div>
             </div>
             <div class="col-12 col-md-4">
-                <div class="card">
+                <div class="card mb-4">
                     <div class="card-body">
-                        <h3 data-en="Holidays this Month" data-ne="यस महिनाका बिदाहरू">Holidays this Month</h3>
+                        <h3 data-en="Holidays in 2082 BS" data-ne="२०८२ BS मा बिदाहरू">Holidays in 2082 BS</h3>
                         <ul id="holidayList"></ul>
                     </div>
                 </div>
@@ -201,8 +176,8 @@
     <footer class="bg-light text-center py-3">
         <p class="design-credit">Calendar Concept and Design by Santosh Phuyal</p>
     </footer>
-    <script nonce="OGY1ZmVhYWEtOGRlNy00YjRhLTk4NzEtNjY2OWU2MGNiN2Y2" src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <script nonce="OGY1ZmVhYWEtOGRlNy00YjRhLTk4NzEtNjY2OWU2MGNiN2Y2" src="/js/shared.js"></script>
-    <script nonce="OGY1ZmVhYWEtOGRlNy00YjRhLTk4NzEtNjY2OWU2MGNiN2Y2" src="/js/calendar.js"></script>
+    <script nonce="OGY1ZmVhYWEtOGRlNy00YjJhLTk4NzEtNjY2OWU2MGNiN2Y2" src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script nonce="OGY1ZmVhYWEtOGRlNy00YjJhLTk4NzEtNjY2OWU2MGNiN2Y2" src="js/shared.js"></script>
+    <script nonce="OGY1ZmVhYWEtOGRlNy00YjJhLTk4NzEtNjY2OWU2MGNiN2Y2" src="js/calendar.js"></script>
 </body>
 </html>
