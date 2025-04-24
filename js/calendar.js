@@ -1,15 +1,18 @@
-const calendarGrid = document.getElementById('calendarGrid');
-const monthTabs = document.getElementById('monthTabs');
-const currentMonthDisplay = document.getElementById('currentMonth');
-const yearFilter = document.getElementById('yearFilter');
-const todayButton = document.getElementById('todayButton');
-const monthlySummary = document.getElementById('monthlySummary');
-const holidayList = document.getElementById('holidayList');
-const todayNepaliDate = document.getElementById('todayNepaliDate');
-const todayEnglishDate = document.getElementById('todayEnglishDate');
-const noteFormModal = new bootstrap.Modal(document.getElementById('noteFormModal'));
+const calendarGrid = typeof document !== 'undefined' ? document.getElementById('calendarGrid') : null;
+const monthTabs = typeof document !== 'undefined' ? document.getElementById('monthTabs') : null;
+const currentMonthDisplay = typeof document !== 'undefined' ? document.getElementById('currentMonth') : null;
+const yearFilter = typeof document !== 'undefined' ? document.getElementById('yearFilter') : null;
+const todayButton = typeof document !== 'undefined' ? document.getElementById('todayButton') : null;
+const monthlySummary = typeof document !== 'undefined' ? document.getElementById('monthlySummary') : null;
+const holidayList = typeof document !== 'undefined' ? document.getElementById('holidayList') : null;
+const todayNepaliDate = typeof document !== 'undefined' ? document.getElementById('todayNepaliDate') : null;
+const todayEnglishDate = typeof document !== 'undefined' ? document.getElementById('todayEnglishDate') : null;
+const noteFormModal = typeof bootstrap !== 'undefined' && typeof document !== 'undefined'
+    ? new bootstrap.Modal(document.getElementById('noteFormModal'))
+    : null;
 
 function renderMonthTabs() {
+    if (!monthTabs) return;
     monthTabs.innerHTML = '';
     calendarData[currentYear].forEach((month, index) => {
         let tab = document.createElement('button');
@@ -25,6 +28,7 @@ function renderMonthTabs() {
 }
 
 function renderCalendar() {
+    if (!calendarGrid || !currentMonthDisplay) return;
     calendarGrid.innerHTML = '';
     const fragment = document.createDocumentFragment();
     const month = calendarData[currentYear][currentMonthIndex];
@@ -58,11 +62,19 @@ function renderCalendar() {
         let gregDay = gregDate.getDay();
         cell.classList.add(`day-${gregDay}`);
 
+        // Day number (BS day)
         let dayNumber = document.createElement('span');
         dayNumber.className = 'day-number';
         dayNumber.textContent = isNepali ? day.toString().replace(/[0-9]/g, d => String.fromCharCode(0x0966 + parseInt(d))) : day;
         cell.appendChild(dayNumber);
 
+        // Nepali (BS) date (Year Month Day)
+        let nepaliDate = document.createElement('small');
+        nepaliDate.className = 'nepali-date';
+        nepaliDate.textContent = `${currentYear} ${isNepali ? monthsNepali[currentMonthIndex] : month.name} ${isNepali ? day.toString().replace(/[0-9]/g, d => String.fromCharCode(0x0966 + parseInt(d))) : day}`;
+        cell.appendChild(nepaliDate);
+
+        // Gregorian date
         let gregorianDate = document.createElement('small');
         gregorianDate.className = 'gregorian-date';
         gregorianDate.textContent = gregDate.toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
@@ -94,6 +106,7 @@ function renderCalendar() {
         });
 
         cell.addEventListener('click', () => {
+            if (!document || !noteFormModal) return;
             document.getElementById('selectedDate').textContent = `${currentYear}-${String(currentMonthIndex + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
             noteFormModal.show();
         });
@@ -107,6 +120,7 @@ function renderCalendar() {
 }
 
 function renderMonthlySummary() {
+    if (!monthlySummary) return;
     let income = 0, expense = 0;
     let datePrefix = `${currentYear}-${String(currentMonthIndex + 1).padStart(2, '0')}`;
     notes.forEach(note => {
@@ -130,6 +144,7 @@ function renderMonthlySummary() {
 }
 
 function renderHolidayList() {
+    if (!holidayList) return;
     holidayList.innerHTML = '';
     const month = calendarData[currentYear][currentMonthIndex];
     if (month.holidays.length === 0) {
@@ -146,6 +161,7 @@ function renderHolidayList() {
 }
 
 function exportCalendarToExcel() {
+    if (typeof XLSX === 'undefined') return; // Skip in Node.js unless XLSX is mocked
     let headers = isNepali
         ? ['मिति', 'दिन', 'ग्रेगोरियन मिति', 'बिदा']
         : ['Date', 'Day', 'Gregorian Date', 'Holiday'];
@@ -169,6 +185,7 @@ function exportCalendarToExcel() {
 }
 
 function exportHolidaysToExcel() {
+    if (typeof XLSX === 'undefined') return; // Skip in Node.js unless XLSX is mocked
     let headers = isNepali
         ? ['महिना', 'दिन', 'बिदा']
         : ['Month', 'Day', 'Holiday'];
@@ -189,6 +206,7 @@ function exportHolidaysToExcel() {
 }
 
 function exportCalendarToPDF() {
+    if (typeof window === 'undefined' || !window.jspdf) return; // Skip in Node.js unless jsPDF is mocked
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
     let title = isNepali
@@ -196,7 +214,7 @@ function exportCalendarToPDF() {
         : `Calendar ${currentYear} - ${calendarData[currentYear][currentMonthIndex].name}`;
     let headers = isNepali
         ? ['मिति', 'दिन', 'ग्रेगोरियन मिति', 'बिदा']
-        : ['Date', 'Day', 'Gregorian Date', 'Holiday'];
+        : ['Date', "Day", 'Gregorian Date', 'Holiday'];
     let data = [];
     const month = calendarData[currentYear][currentMonthIndex];
     let gregDate = new Date(month.gregStart);
@@ -223,6 +241,7 @@ function exportCalendarToPDF() {
 }
 
 function importCalendarData() {
+    if (typeof document === 'undefined') return; // Skip in Node.js
     let input = document.createElement('input');
     input.type = 'file';
     input.accept = '.json';
@@ -251,6 +270,7 @@ function importCalendarData() {
 }
 
 function importHolidayData() {
+    if (typeof document === 'undefined') return; // Skip in Node.js
     let input = document.createElement('input');
     input.type = 'file';
     input.accept = '.json';
@@ -277,52 +297,61 @@ function importHolidayData() {
 }
 
 function setTodayDate() {
+    if (!todayNepaliDate || !todayEnglishDate) return;
     let today = new Date();
     let bsDate = getBSDateFromGregorian(today);
     todayNepaliDate.textContent = `${isNepali ? 'आजको मिति (नेपाली):' : 'Today (Nepali):'} ${bsDate.day} ${isNepali ? monthsNepali[bsDate.month] : calendarData[bsDate.year][bsDate.month].name} ${bsDate.year}`;
     todayEnglishDate.textContent = `${isNepali ? 'आजको मिति (अंग्रेजी):' : 'Today (English):'} ${today.toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' })}`;
 }
 
-yearFilter.addEventListener('change', () => {
-    currentYear = parseInt(yearFilter.value);
-    currentMonthIndex = 0;
-    renderCalendar();
-});
-
-todayButton.addEventListener('click', () => {
-    let today = new Date();
-    let bsDate = getBSDateFromGregorian(today);
-    currentYear = bsDate.year;
-    currentMonthIndex = bsDate.month;
-    yearFilter.value = currentYear;
-    renderCalendar();
-});
-
-window.addEventListener('load', () => {
-    setTodayDate();
-    renderMonthTabs();
-    renderCalendar();
-});
-
-document.querySelectorAll('.excel-option').forEach(option => {
-    option.addEventListener('click', (e) => {
-        e.preventDefault();
-        if (option.dataset.type === 'calendar') exportCalendarToExcel();
-        else if (option.dataset.type === 'holiday') exportHolidaysToExcel();
+if (yearFilter) {
+    yearFilter.addEventListener('change', () => {
+        currentYear = parseInt(yearFilter.value);
+        currentMonthIndex = 0;
+        renderCalendar();
     });
-});
+}
 
-document.querySelectorAll('.pdf-option').forEach(option => {
-    option.addEventListener('click', (e) => {
-        e.preventDefault();
-        if (option.dataset.type === 'calendar') exportCalendarToPDF();
+if (todayButton) {
+    todayButton.addEventListener('click', () => {
+        let today = new Date();
+        let bsDate = getBSDateFromGregorian(today);
+        currentYear = bsDate.year;
+        currentMonthIndex = bsDate.month;
+        yearFilter.value = currentYear;
+        renderCalendar();
     });
-});
+}
 
-document.querySelectorAll('.import-option').forEach(option => {
-    option.addEventListener('click', (e) => {
-        e.preventDefault();
-        if (option.dataset.type === 'calendar') importCalendarData();
-        else if (option.dataset.type === 'holiday') importHolidayData();
+if (typeof window !== 'undefined') {
+    window.addEventListener('load', () => {
+        setTodayDate();
+        renderMonthTabs();
+        renderCalendar();
     });
-});
+}
+
+if (typeof document !== 'undefined') {
+    document.querySelectorAll('.excel-option').forEach(option => {
+        option.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (option.dataset.type === 'calendar') exportCalendarToExcel();
+            else if (option.dataset.type === 'holiday') exportHolidaysToExcel();
+        });
+    });
+
+    document.querySelectorAll('.pdf-option').forEach(option => {
+        option.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (option.dataset.type === 'calendar') exportCalendarToPDF();
+        });
+    });
+
+    document.querySelectorAll('.import-option').forEach(option => {
+        option.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (option.dataset.type === 'calendar') importCalendarData();
+            else if (option.dataset.type === 'holiday') importHolidayData();
+        });
+    });
+}
