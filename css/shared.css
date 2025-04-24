@@ -1,48 +1,56 @@
-:root {
-    --primary: #d32f2f;
-    --secondary: #0288d1;
-    --accent: #fbc02d;
-    --income: #4caf50;
-    --expense: #d32f2f;
+body {
+    font-family: 'Poppins', 'Noto Sans Devanagari', sans-serif;
+    background-color: #f8f9fa;
 }
-body { 
-    font-family: 'Poppins', sans-serif; 
-    background: #f5f5f5; 
-    margin: 0;
+
+.bg-gradient-primary {
+    background: linear-gradient(90deg, #0288d1 0%, #4fc3f7 100%);
+    padding: 20px;
 }
-.nepali { 
-    font-family: 'Noto Sans Devanagari', sans-serif; 
-    font-size: 1.1rem; 
-    font-weight: 500;
-}
+
 .header-title {
-    font-size: 2rem;
+    font-size: 2.5rem;
     font-weight: 600;
-    background: linear-gradient(45deg, var(--primary), var(--secondary));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+    margin-bottom: 0;
 }
-header {
-    padding: 1.5rem;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-footer {
-    padding: 1rem;
-    margin-top: 2rem;
-    background: #e3f2fd;
-    border-top: 1px solid var(--secondary);
-}
+
 .design-credit {
-    font-size: 0.85rem;
-    font-style: italic;
-    color: var(--secondary);
-    margin: 0.5rem 0;
+    font-size: 0.9rem;
+    margin-bottom: 0;
 }
+
 .card {
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    border-radius: 8px;
+    border-radius: 10px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
-@media (max-width: 768px) {
-    .header-title { font-size: 1.5rem; }
-    .design-credit { font-size: 0.75rem; }
+
+.btn-purple {
+    background-color: #6f42c1;
+    color: white;
+}
+
+.btn-purple:hover {
+    background-color: #5632a0;
+}
+
+#monthlySummary {
+    font-size: 1.1rem; /* Increased font size for better readability */
+    font-weight: 400; /* Lighter font weight for clarity */
+    line-height: 1.6; /* Added line spacing for better readability */
+}
+
+/* Responsive adjustments */
+@media (max-width: 576px) {
+    .header-title {
+        font-size: 1.8rem;
+    }
+
+    .btn {
+        font-size: 0.9rem;
+        padding: 8px 12px;
+    }
+
+    #monthlySummary {
+        font-size: 1rem;
+    }
 }
