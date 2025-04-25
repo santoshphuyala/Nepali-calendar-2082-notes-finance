@@ -1,43 +1,4 @@
-<script type="text/javascript">
-        var gk_isXlsx = false;
-        var gk_xlsxFileLookup = {};
-        var gk_fileData = {};
-        function filledCell(cell) {
-          return cell !== '' && cell != null;
-        }
-        function loadFileData(filename) {
-        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
-            try {
-                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
-                var firstSheetName = workbook.SheetNames[0];
-                var worksheet = workbook.Sheets[firstSheetName];
-
-                // Convert sheet to JSON to filter blank rows
-                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
-                // Filter out blank rows (rows where all cells are empty, null, or undefined)
-                var filteredData = jsonData.filter(row => row.some(filledCell));
-
-                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
-                var headerRowIndex = filteredData.findIndex((row, index) =>
-                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
-                );
-                // Fallback
-                if (headerRowIndex === -1 || headerRowIndex > 25) {
-                  headerRowIndex = 0;
-                }
-
-                // Convert filtered JSON back to CSV
-                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
-                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
-                return csv;
-            } catch (e) {
-                console.error(e);
-                return "";
-            }
-        }
-        return gk_fileData[filename] || "";
-        }
-        </script><!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -46,17 +7,75 @@
     <meta http-equiv="Content-Security-Policy" content="
         default-src 'self';
         script-src 'self' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net;
-        img-src 'self' blob: data: https://assets.grok.com https://imgs.search.brave.com;
-        style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net;
+        img-src 'self' blob: data:;
+        style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
         font-src 'self' https://fonts.gstatic.com;
-        connect-src 'self' https://api.grok.com;
+        connect-src 'self'
     ">
     <title>Nepali Calendar 2082</title>
     <link rel="icon" href="data:;base64,iVBORw0KGgo=">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&family=Noto+Sans+Devanagari:wght@400;600&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="css/shared.css">
-    <link rel="stylesheet" href="css/calendar.css">
+    <style>
+        body {
+            font-family: 'Poppins', 'Noto Sans Devanagari', sans-serif;
+            background-color: #f5f7fa;
+        }
+        .bg-gradient-primary {
+            background: linear-gradient(180deg, #007bff 0%, #0056b3 100%);
+            padding: 20px;
+        }
+        .header-title {
+            font-size: 2.5rem;
+            margin-bottom: 0;
+        }
+        .design-credit {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+        .navbar-nav .nav-link {
+            font-weight: 500;
+            color: #333;
+        }
+        .navbar-nav .nav-link.active {
+            color: #007bff;
+        }
+        .year-filter {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 5px;
+            padding: 10px;
+        }
+        .calendar-day {
+            padding: 10px;
+            text-align: center;
+            border: 1px solid #ddd;
+            background-color: #fff;
+        }
+        .calendar-day.holiday {
+            background-color: #ffcccc;
+        }
+        .calendar-day.today {
+            background-color: #007bff;
+            color: #fff;
+        }
+        .holiday-list {
+            list-style: none;
+            padding: 0;
+        }
+        .holiday-list li {
+            padding: 5px 0;
+        }
+        footer {
+            margin-top: 20px;
+        }
+    </style>
 </head>
 <body>
     <header class="bg-gradient-primary text-white text-center">
@@ -92,14 +111,17 @@
     <div class="container mt-4">
         <div class="year-filter d-flex flex-wrap justify-content-center gap-2 mb-3">
             <select id="yearSelect" class="form-select w-auto" aria-label="Select Year">
-                <option value="2082" data-en="2082 BS" data-ne="2082 BS">2082 BS</option>
+                <option value="2081" data-en="2081 BS" data-ne="2081 BS">2081 BS</option>
+                <option value="2082" selected data-en="2082 BS" data-ne="2082 BS">2082 BS</option>
+                <option value="2083" data-en="2083 BS" data-ne="2083 BS">2083 BS</option>
             </select>
             <button id="addNote" class="btn btn-primary" data-en="Add Note" data-ne="नोट थप्नुहोस्" aria-label="Add Note">Add Note</button>
             <button id="addFinance" class="btn btn-primary" data-en="Add Finance" data-ne="वित्त थप्नुहोस्" aria-label="Add Finance">Add Finance</button>
             <div class="dropdown">
                 <button class="btn btn-success dropdown-toggle" data-bs-toggle="dropdown" data-en="Excel Export" data-ne="एक्सेल निर्यात" aria-label="Excel Export" aria-expanded="false">Excel Export</button>
                 <ul class="dropdown-menu">
-                    <li><a class="dropdown-item excel-option" href="#" data-type="calendar" data-en="Calendar" data-ne="पात्रो">Calendar</a></li>
+                    <li><a class="dropdown-item excel-option" href="#" data-type="monthly_calendar" data-en="Monthly Calendar" data-ne="मासिक पात्रो">Monthly Calendar</a></li>
+                    <li><a class="dropdown-item excel-option" href="#" data-type="yearly_holidays" data-en="Yearly Holidays" data-ne="वार्षिक बिदाहरू">Yearly Holidays</a></li>
                     <li><a class="dropdown-item excel-option" href="#" data-type="note" data-en="Notes" data-ne="नोटहरू">Notes</a></li>
                     <li><a class="dropdown-item excel-option" href="#" data-type="finance" data-en="Finance" data-ne="वित्त">Finance</a></li>
                 </ul>
@@ -107,7 +129,8 @@
             <div class="dropdown">
                 <button class="btn btn-danger dropdown-toggle" data-bs-toggle="dropdown" data-en="PDF Export" data-ne="PDF निर्यात" aria-label="PDF Export" aria-expanded="false">PDF Export</button>
                 <ul class="dropdown-menu">
-                    <li><a class="dropdown-item pdf-option" href="#" data-type="calendar" data-en="Calendar" data-ne="पात्रो">Calendar</a></li>
+                    <li><a class="dropdown-item pdf-option" href="#" data-type="monthly_calendar" data-en="Monthly Calendar" data-ne="मासिक पात्रो">Monthly Calendar</a></li>
+                    <li><a class="dropdown-item pdf-option" href="#" data-type="yearly_holidays" data-en="Yearly Holidays" data-ne="वार्षिक बिदाहरू">Yearly Holidays</a></li>
                     <li><a class="dropdown-item pdf-option" href="#" data-type="note" data-en="Notes" data-ne="नोटहरू">Notes</a></li>
                     <li><a class="dropdown-item pdf-option" href="#" data-type="finance" data-en="Finance" data-ne="वित्त">Finance</a></li>
                 </ul>
@@ -115,10 +138,13 @@
             <div class="dropdown">
                 <button class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown" data-en="Import" data-ne="आयात" aria-label="Import Data" aria-expanded="false">Import</button>
                 <ul class="dropdown-menu">
+                    <li><a class="dropdown-item import-option" href="#" data-type="monthly_calendar" data-en="Monthly Calendar" data-ne="मासिक पात्रो">Monthly Calendar</a></li>
+                    <li><a class="dropdown-item import-option" href="#" data-type="yearly_holidays" data-en="Yearly Holidays" data-ne="वार्षिक बिदाहरू">Yearly Holidays</a></li>
                     <li><a class="dropdown-item import-option" href="#" data-type="note" data-en="Notes" data-ne="नोटहरू">Notes</a></li>
                     <li><a class="dropdown-item import-option" href="#" data-type="finance" data-en="Finance" data-ne="वित्त">Finance</a></li>
                 </ul>
             </div>
+            <input type="file" id="fileInput" style="display: none;" accept=".json">
         </div>
         <div class="language-toggle text-center mb-3">
             <button id="languageToggle" class="btn btn-outline-primary" data-en="Toggle Language (EN/NE)" data-ne="भाषा टगल गर्नुहोस् (EN/NE)" aria-label="Toggle Language">Toggle Language (EN/NE)</button>
@@ -145,40 +171,40 @@
                         </ul>
                         <div class="tab-content" id="monthTabContent">
                             <div class="tab-pane fade show active" id="baisakh" role="tabpanel" aria-labelledby="baisakh-tab">
-                                <div class="calendar-grid" id="calendarGrid"></div>
+                                <div class="calendar-grid" id="calendarGridBaisakh"></div>
                             </div>
                             <div class="tab-pane fade" id="jestha" role="tabpanel" aria-labelledby="jestha-tab">
-                                <div class="calendar-grid" id="calendarGrid"></div>
+                                <div class="calendar-grid" id="calendarGridJestha"></div>
                             </div>
                             <div class="tab-pane fade" id="asar" role="tabpanel" aria-labelledby="asar-tab">
-                                <div class="calendar-grid" id="calendarGrid"></div>
+                                <div class="calendar-grid" id="calendarGridAsar"></div>
                             </div>
                             <div class="tab-pane fade" id="shrawan" role="tabpanel" aria-labelledby="shrawan-tab">
-                                <div class="calendar-grid" id="calendarGrid"></div>
+                                <div class="calendar-grid" id="calendarGridShrawan"></div>
                             </div>
                             <div class="tab-pane fade" id="bhadra" role="tabpanel" aria-labelledby="bhadra-tab">
-                                <div class="calendar-grid" id="calendarGrid"></div>
+                                <div class="calendar-grid" id="calendarGridBhadra"></div>
                             </div>
                             <div class="tab-pane fade" id="asoj" role="tabpanel" aria-labelledby="asoj-tab">
-                                <div class="calendar-grid" id="calendarGrid"></div>
+                                <div class="calendar-grid" id="calendarGridAsoj"></div>
                             </div>
                             <div class="tab-pane fade" id="kartik" role="tabpanel" aria-labelledby="kartik-tab">
-                                <div class="calendar-grid" id="calendarGrid"></div>
+                                <div class="calendar-grid" id="calendarGridKartik"></div>
                             </div>
                             <div class="tab-pane fade" id="mangsir" role="tabpanel" aria-labelledby="mangsir-tab">
-                                <div class="calendar-grid" id="calendarGrid"></div>
+                                <div class="calendar-grid" id="calendarGridMangsir"></div>
                             </div>
                             <div class="tab-pane fade" id="poush" role="tabpanel" aria-labelledby="poush-tab">
-                                <div class="calendar-grid" id="calendarGrid"></div>
+                                <div class="calendar-grid" id="calendarGridPoush"></div>
                             </div>
                             <div class="tab-pane fade" id="magh" role="tabpanel" aria-labelledby="magh-tab">
-                                <div class="calendar-grid" id="calendarGrid"></div>
+                                <div class="calendar-grid" id="calendarGridMagh"></div>
                             </div>
                             <div class="tab-pane fade" id="falgun" role="tabpanel" aria-labelledby="falgun-tab">
-                                <div class="calendar-grid" id="calendarGrid"></div>
+                                <div class="calendar-grid" id="calendarGridFalgun"></div>
                             </div>
                             <div class="tab-pane fade" id="chaitra" role="tabpanel" aria-labelledby="chaitra-tab">
-                                <div class="calendar-grid" id="calendarGrid"></div>
+                                <div class="calendar-grid" id="calendarGridChaitra"></div>
                             </div>
                         </div>
                     </div>
@@ -248,12 +274,217 @@
         <p class="design-credit">Calendar Concept and Design by Santosh Phuyal</p>
     </footer>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="js/shared.js"></script>
-    <script src="js/calendar.js"></script>
-    <script src="js/finance.js"></script>
-    <script src="js/note.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Calendar Data for 2082 BS (Simplified for Demo)
+            const calendarData = {
+                2082: {
+                    Baisakh: { days: 31, startDay: 2, holidays: [{ date: 1, name: "Nepali New Year" }] },
+                    Jestha: { days: 32, startDay: 5, holidays: [] },
+                    Asar: { days: 31, startDay: 1, holidays: [] },
+                    Shrawan: { days: 31, startDay: 3, holidays: [] },
+                    Bhadra: { days: 32, startDay: 6, holidays: [] },
+                    Asoj: { days: 30, startDay: 2, holidays: [{ date: 15, name: "Dashain" }] },
+                    Kartik: { days: 29, startDay: 4, holidays: [] },
+                    Mangsir: { days: 30, startDay: 6, holidays: [] },
+                    Poush: { days: 29, startDay: 1, holidays: [] },
+                    Magh: { days: 29, startDay: 3, holidays: [] },
+                    Falgun: { days: 30, startDay: 5, holidays: [] },
+                    Chaitra: { days: 30, startDay: 0, holidays: [] }
+                }
+            };
+
+            // Render Calendar Grid
+            function renderCalendar(year, month) {
+                const monthData = calendarData[year][month];
+                const grid = document.getElementById(`calendarGrid${month}`);
+                if (!grid) {
+                    console.error(`Calendar grid for ${month} not found`);
+                    return;
+                }
+                grid.innerHTML = '';
+
+                // Add day labels
+                const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+                daysOfWeek.forEach(day => {
+                    const dayLabel = document.createElement('div');
+                    dayLabel.className = 'calendar-day';
+                    dayLabel.textContent = day;
+                    grid.appendChild(dayLabel);
+                });
+
+                // Add empty days before the start of the month
+                for (let i = 0; i < monthData.startDay; i++) {
+                    const emptyDay = document.createElement('div');
+                    emptyDay.className = 'calendar-day';
+                    grid.appendChild(emptyDay);
+                }
+
+                // Add days of the month
+                const today = new Date();
+                const nepaliToday = { year: 2082, month: 'Mangsir', date: 12 }; // Simplified for demo (adjust based on actual date conversion)
+                for (let i = 1; i <= monthData.days; i++) {
+                    const day = document.createElement('div');
+                    day.className = 'calendar-day';
+                    day.textContent = i;
+                    if (monthData.holidays.some(h => h.date === i)) {
+                        day.classList.add('holiday');
+                    }
+                    if (year === nepaliToday.year && month === nepaliToday.month && i === nepaliToday.date) {
+                        day.classList.add('today');
+                    }
+                    day.addEventListener('click', () => {
+                        document.getElementById('selectedDate').textContent = `${month} ${i}, ${year}`;
+                        new bootstrap.Modal(document.getElementById('noteFormModal')).show();
+                    });
+                    grid.appendChild(day);
+                }
+            }
+
+            // Render Holidays
+            function renderHolidays(year) {
+                const holidayList = document.getElementById('holidayList');
+                if (!holidayList) {
+                    console.error('Holiday list element not found');
+                    return;
+                }
+                holidayList.innerHTML = '';
+                Object.keys(calendarData[year]).forEach(month => {
+                    const holidays = calendarData[year][month].holidays;
+                    holidays.forEach(holiday => {
+                        const li = document.createElement('li');
+                        li.textContent = `${month} ${holiday.date}: ${holiday.name}`;
+                        holidayList.appendChild(li);
+                    });
+                });
+            }
+
+            // Initialize Calendar
+            const year = document.getElementById('yearSelect').value;
+            Object.keys(calendarData[year]).forEach(month => renderCalendar(year, month));
+            renderHolidays(year);
+
+            // Year Change Handler
+            document.getElementById('yearSelect').addEventListener('change', (e) => {
+                const selectedYear = e.target.value;
+                Object.keys(calendarData[selectedYear]).forEach(month => renderCalendar(selectedYear, month));
+                renderHolidays(selectedYear);
+            });
+
+            // Language Toggle
+            let isNepali = false;
+            document.getElementById('languageToggle').addEventListener('click', () => {
+                isNepali = !isNepali;
+                document.querySelectorAll('[data-en]').forEach(elem => {
+                    elem.textContent = isNepali ? elem.getAttribute('data-ne') : elem.getAttribute('data-en');
+                });
+            });
+
+            // Dark Mode Toggle
+            document.getElementById('darkModeToggle').addEventListener('click', () => {
+                document.body.classList.toggle('dark-mode');
+                if (document.body.classList.contains('dark-mode')) {
+                    document.body.style.backgroundColor = '#333';
+                    document.body.style.color = '#fff';
+                } else {
+                    document.body.style.backgroundColor = '#f5f7fa';
+                    document.body.style.color = '#000';
+                }
+            });
+
+            // Add Note and Finance
+            document.getElementById('addNote').addEventListener('click', () => {
+                document.getElementById('entryType').value = 'note';
+                document.getElementById('selectedDate').textContent = 'Today';
+                new bootstrap.Modal(document.getElementById('noteFormModal')).show();
+            });
+
+            document.getElementById('addFinance').addEventListener('click', () => {
+                document.getElementById('entryType').value = 'income';
+                document.getElementById('selectedDate').textContent = 'Today';
+                new bootstrap.Modal(document.getElementById('noteFormModal')).show();
+            });
+
+            document.getElementById('saveNote').addEventListener('click', () => {
+                const entry = {
+                    type: document.getElementById('entryType').value,
+                    title: document.getElementById('noteTitle').value,
+                    time: document.getElementById('noteTime').value,
+                    description: document.getElementById('noteDescription').value,
+                    date: document.getElementById('selectedDate').textContent
+                };
+                console.log('Saved Entry:', entry);
+                bootstrap.Modal.getInstance(document.getElementById('noteFormModal')).hide();
+            });
+
+            document.getElementById('closeEntry').addEventListener('click', () => {
+                bootstrap.Modal.getInstance(document.getElementById('noteFormModal')).hide();
+            });
+
+            // Export Functionality
+            document.querySelectorAll('.excel-option').forEach(option => {
+                option.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const type = e.target.getAttribute('data-type');
+                    let data = [];
+                    if (type === 'monthly_calendar') {
+                        data = Object.keys(calendarData[year]).map(month => ({
+                            Month: month,
+                            Days: calendarData[year][month].days
+                        }));
+                    } else if (type === 'yearly_holidays') {
+                        data = Object.keys(calendarData[year]).flatMap(month =>
+                            calendarData[year][month].holidays.map(h => ({
+                                Month: month,
+                                Date: h.date,
+                                Name: h.name
+                            }))
+                        );
+                    }
+                    const ws = XLSX.utils.json_to_sheet(data);
+                    const wb = XLSX.utils.book_new();
+                    XLSX.utils.book_append_sheet(wb, ws, type);
+                    XLSX.writeFile(wb, `${type}.xlsx`);
+                });
+            });
+
+            document.querySelectorAll('.pdf-option').forEach(option => {
+                option.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const { jsPDF } = window.jspdf;
+                    const doc = new jsPDF();
+                    const type = e.target.getAttribute('data-type');
+                    doc.text(`Export: ${type}`, 10, 10);
+                    doc.save(`${type}.pdf`);
+                });
+            });
+
+            // Import Functionality
+            document.querySelectorAll('.import-option').forEach(option => {
+                option.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const type = e.target.getAttribute('data-type');
+                    const fileInput = document.getElementById('fileInput');
+                    fileInput.setAttribute('data-import-type', type);
+                    fileInput.click();
+                });
+            });
+
+            document.getElementById('fileInput').addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        const data = JSON.parse(event.target.result);
+                        const type = e.target.getAttribute('data-import-type');
+                        console.log(`Imported ${type}:`, data);
+                    };
+                    reader.readAsText(file);
+                }
+            });
+        });
+    </script>
 </body>
 </html>
