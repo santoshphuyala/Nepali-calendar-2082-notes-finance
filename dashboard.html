@@ -45,7 +45,7 @@
     <meta name="referrer" content="strict-origin-when-cross-origin">
     <meta http-equiv="Content-Security-Policy" content="
         default-src 'self';
-        script-src 'self' 'nonce-OGY1ZmVhYWEtOGRlNy00YjRhLTk4NzEtNjY2OWU2MGNiN2Y2' 'strict-dynamic' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net;
+        script-src 'self' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net;
         img-src 'self' blob: data: https://assets.grok.com https://imgs.search.brave.com;
         style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net;
         font-src 'self' https://fonts.gstatic.com;
@@ -55,8 +55,8 @@
     <link rel="icon" href="data:;base64,iVBORw0KGgo=">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&family=Noto+Sans+Devanagari:wght@400;600&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="/css/shared.css">
-    <link rel="stylesheet" href="/css/dashboard.css">
+    <link rel="stylesheet" href="css/shared.css">
+    <link rel="stylesheet" href="css/dashboard.css">
 </head>
 <body>
     <header class="bg-gradient-primary text-white text-center">
@@ -90,51 +90,127 @@
         </nav>
     </header>
     <div class="container mt-4">
+        <div class="year-filter d-flex flex-wrap justify-content-center gap-2 mb-3">
+            <select id="yearSelect" class="form-select w-auto" aria-label="Select Year">
+                <option value="2082" data-en="2082 BS" data-ne="2082 BS">2082 BS</option>
+            </select>
+            <button id="addNote" class="btn btn-primary" data-en="Add Note" data-ne="नोट थप्नुहोस्" aria-label="Add Note">Add Note</button>
+            <button id="addFinance" class="btn btn-primary" data-en="Add Finance" data-ne="वित्त थप्नुहोस्" aria-label="Add Finance">Add Finance</button>
+            <div class="dropdown">
+                <button class="btn btn-success dropdown-toggle" data-bs-toggle="dropdown" data-en="Excel Export" data-ne="एक्सेल निर्यात" aria-label="Excel Export" aria-expanded="false">Excel Export</button>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item excel-option" href="#" data-type="calendar" data-en="Calendar" data-ne="पात्रो">Calendar</a></li>
+                    <li><a class="dropdown-item excel-option" href="#" data-type="note" data-en="Notes" data-ne="नोटहरू">Notes</a></li>
+                    <li><a class="dropdown-item excel-option" href="#" data-type="finance" data-en="Finance" data-ne="वित्त">Finance</a></li>
+                </ul>
+            </div>
+            <div class="dropdown">
+                <button class="btn btn-danger dropdown-toggle" data-bs-toggle="dropdown" data-en="PDF Export" data-ne="PDF निर्यात" aria-label="PDF Export" aria-expanded="false">PDF Export</button>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item pdf-option" href="#" data-type="calendar" data-en="Calendar" data-ne="पात्रो">Calendar</a></li>
+                    <li><a class="dropdown-item pdf-option" href="#" data-type="note" data-en="Notes" data-ne="नोटहरू">Notes</a></li>
+                    <li><a class="dropdown-item pdf-option" href="#" data-type="finance" data-en="Finance" data-ne="वित्त">Finance</a></li>
+                </ul>
+            </div>
+            <div class="dropdown">
+                <button class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown" data-en="Import" data-ne="आयात" aria-label="Import Data" aria-expanded="false">Import</button>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item import-option" href="#" data-type="note" data-en="Notes" data-ne="नोटहरू">Notes</a></li>
+                    <li><a class="dropdown-item import-option" href="#" data-type="finance" data-en="Finance" data-ne="वित्त">Finance</a></li>
+                </ul>
+            </div>
+        </div>
         <div class="language-toggle text-center mb-3">
             <button id="languageToggle" class="btn btn-outline-primary" data-en="Toggle Language (EN/NE)" data-ne="भाषा टगल गर्नुहोस् (EN/NE)" aria-label="Toggle Language">Toggle Language (EN/NE)</button>
             <button id="darkModeToggle" class="btn btn-outline-primary ms-2" data-en="Dark Mode" data-ne="डार्क मोड" aria-label="Toggle Dark Mode">Dark Mode</button>
         </div>
         <div class="row">
-            <div class="col-12 col-md-6 mb-4">
+            <div class="col-12 col-md-6">
                 <div class="card">
                     <div class="card-body">
-                        <h3 data-en="Financial Summary (2082)" data-ne="वित्तीय सारांश (२०८२)">Financial Summary (2082)</h3>
-                        <p><strong data-en="Total Income:" data-ne="कुल आय:">Total Income:</strong> <span id="totalIncome">0 NPR</span></p>
-                        <p><strong data-en="Total Expenses:" data-ne="कुल खर्च:">Total Expenses:</strong> <span id="totalExpenses">0 NPR</span></p>
-                        <p><strong data-en="Net Balance:" data-ne="नेट ब्यालेन्स:">Net Balance:</strong> <span id="netBalance">0 NPR</span></p>
+                        <h3 data-en="Upcoming Events" data-ne="आगामी घटनाहरू">Upcoming Events</h3>
+                        <ul class="event-list" id="eventList"></ul>
                     </div>
                 </div>
             </div>
-            <div class="col-12 col-md-6 mb-4">
+            <div class="col-12 col-md-6">
                 <div class="card">
                     <div class="card-body">
-                        <h3 data-en="Notes Summary" data-ne="नोटहरूको सारांश">Notes Summary</h3>
-                        <canvas id="notesChart" aria-label="Notes per Month Chart"></canvas>
+                        <h3 data-en="Financial Overview" data-ne="वित्तीय अवलोकन">Financial Overview</h3>
+                        <canvas id="dashboardChart"></canvas>
                     </div>
                 </div>
             </div>
-            <div class="col-12 col-md-6 mb-4">
+        </div>
+        <div class="row mt-4">
+            <div class="col-12">
                 <div class="card">
                     <div class="card-body">
-                        <h3 data-en="Upcoming Holidays" data-ne="आगामी बिदाहरू">Upcoming Holidays</h3>
-                        <ul id="upcomingHolidays"></ul>
+                        <h3 data-en="Recent Transactions" data-ne="हालको लेनदेन">Recent Transactions</h3>
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th data-en="Date" data-ne="मिति">Date</th>
+                                    <th data-en="Type" data-ne="प्रकार">Type</th>
+                                    <th data-en="Amount" data-ne="रकम">Amount</th>
+                                    <th data-en="Category" data-ne="श्रेणी">Category</th>
+                                    <th data-en="Description" data-ne="विवरण">Description</th>
+                                    <th data-en="Actions" data-ne="कार्यहरू">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recentTransactions"></tbody>
+                        </table>
                     </div>
                 </div>
             </div>
-            <div class="col-12 col-md-6 mb-4">
-                <div class="card">
-                    <div class="card-body">
-                        <h3 data-en="Upcoming Reminders" data-ne="आगामी रिमाइन्डरहरू">Upcoming Reminders</h3>
-                        <ul id="upcomingReminders"></ul>
+        </div>
+    </div>
+    <div class="modal fade" id="noteFormModal" tabindex="-1" aria-labelledby="noteFormTitle" role="dialog">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="noteFormTitle"><span data-en="Add Entry for" data-ne="प्रवेश थप्नुहोस्">Add Entry for</span> <span id="selectedDate">Date</span></h5>
+                    <button type="button" class="btn-close" id="closeEntry" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <select id="entryType" class="form-select mb-3" aria-label="Entry Type">
+                        <option value="note" data-en="Note" data-ne="नोट">Note</option>
+                        <option value="income" data-en="Income" data-ne="आय">Income</option>
+                        <option value="expense" data-en="Expense" data-ne="खर्च">Expense</option>
+                    </select>
+                    <input type="text" id="noteTitle" class="form-control mb-3" placeholder="Note Title / Amount" data-en="Note Title / Amount" data-ne="नोट शीर्षक / रकम" aria-label="Note Title or Amount">
+                    <input type="time" id="noteTime" class="form-control mb-3" aria-label="Note Time">
+                    <textarea id="noteDescription" class="form-control mb-3" placeholder="Description" data-en="Description" data-ne="विवरण" rows="3" aria-label="Description"></textarea>
+                    <select id="entryCategory" class="form-select mb-3" style="display:none" aria-label="Category">
+                        <option value="" data-en="Select Category" data-ne="श्रेणी चयन गर्नुहोस्">Select Category</option>
+                        <option value="Food" data-en="Food" data-ne="खाना">Food</option>
+                        <option value="Salary" data-en="Salary" data-ne="तलब">Salary</option>
+                        <option value="Rent" data-en="Rent" data-ne="भाडा">Rent</option>
+                        <option value="Utilities" data-en="Utilities" data-ne="उपयोगिताहरू">Utilities</option>
+                        <option value="Transport" data-en="Transport" data-ne="यातायात">Transport</option>
+                        <option value="Entertainment" data-en="Entertainment" data-ne="मनोरञ्जन">Entertainment</option>
+                        <option value="Freelance" data-en="Freelance" data-ne="फ्रीलान्स">Freelance</option>
+                        <option value="Other" data-en="Other" data-ne="अन्य">Other</option>
+                    </select>
+                    <div class="category-manager mb-3" id="categoryManager" style="display:none">
+                        <input type="text" id="newCategory" class="form-control d-inline-block w-75" placeholder="New Category" data-en="New Category" data-ne="नयाँ श्रेणी" aria-label="New Category">
+                        <button id="addCategory" class="btn btn-success" data-en="Add Category" data-ne="श्रेणी थप्नुहोस्" aria-label="Add Category">Add Category</button>
+                    </div>
+                    <div class="mb-3" id="budgetSection" style="display:none">
+                        <input type="number" id="monthlyBudget" class="form-control" placeholder="Monthly Budget (NPR)" data-en="Monthly Budget (NPR)" data-ne="मासिक बजेट (NPR)" aria-label="Monthly Budget">
+                    </div>
+                    <div class="form-check mb-3">
+                        <input type="checkbox" id="recurring" class="form-check-input" aria-label="Recurring Monthly">
+                        <label class="form-check-label" data-en="Recurring Monthly" data-ne="मासिक दोहोरिने">Recurring Monthly</label>
+                    </div>
+                    <div class="form-check mb-3">
+                        <input type="checkbox" id="reminder" class="form-check-input" aria-label="Set Reminder">
+                        <label class="form-check-label" data-en="Set Reminder" data-ne="रिमाइन्डर सेट गर्नुहोस्">Set Reminder</label>
                     </div>
                 </div>
-            </div>
-            <div class="col-12 mb-4">
-                <div class="card">
-                    <div class="card-body">
-                        <h3 data-en="Monthly Financial Trends" data-ne="मासिक वित्तीय प्रवृत्तिहरू">Monthly Financial Trends</h3>
-                        <canvas id="financialTrendsChart" aria-label="Monthly Financial Trends Chart"></canvas>
-                    </div>
+                <div class="modal-footer">
+                    <button id="saveNote" class="btn btn-primary" data-en="Save Entry" data-ne="प्रवेश बचत गर्नुहोस्" aria-label="Save Entry">Save Entry</button>
+                    <button id="editEntry" class="btn btn-success" data-en="Edit Entry" data-ne="प्रवेश सम्पादन गर्नुहोस्" aria-label="Edit Entry">Edit Entry</button>
                 </div>
             </div>
         </div>
@@ -142,9 +218,11 @@
     <footer class="bg-light text-center py-3">
         <p class="design-credit">Calendar Concept and Design by Santosh Phuyal</p>
     </footer>
-    <script nonce="OGY1ZmVhYWEtOGRlNy00YjRhLTk4NzEtNjY2OWU2MGNiN2Y2" src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <script nonce="OGY1ZmVhYWEtOGRlNy00YjRhLTk4NzEtNjY2OWU2MGNiN2Y2" src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script nonce="OGY1ZmVhYWEtOGRlNy00YjRhLTk4NzEtNjY2OWU2MGNiN2Y2" src="/js/shared.js"></script>
-    <script nonce="OGY1ZmVhYWEtOGRlNy00YjRhLTk4NzEtNjY2OWU2MGNiN2Y2" src="/js/dashboard.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="js/shared.js"></script>
+    <script src="js/dashboard.js"></script>
 </body>
 </html>

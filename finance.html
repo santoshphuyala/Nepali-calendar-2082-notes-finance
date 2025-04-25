@@ -1,4 +1,43 @@
-<!DOCTYPE html>
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -6,7 +45,7 @@
     <meta name="referrer" content="strict-origin-when-cross-origin">
     <meta http-equiv="Content-Security-Policy" content="
         default-src 'self';
-        script-src 'self' 'nonce-OGY1ZmVhYWEtOGRlNy00YjJhLTk4NzEtNjY2OWU2MGNiN2Y2' 'strict-dynamic' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net;
+        script-src 'self' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net;
         img-src 'self' blob: data: https://assets.grok.com https://imgs.search.brave.com;
         style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net;
         font-src 'self' https://fonts.gstatic.com;
@@ -52,6 +91,9 @@
     </header>
     <div class="container mt-4">
         <div class="year-filter d-flex flex-wrap justify-content-center gap-2 mb-3">
+            <select id="yearSelect" class="form-select w-auto" aria-label="Select Year">
+                <option value="2082" data-en="2082 BS" data-ne="2082 BS">2082 BS</option>
+            </select>
             <button id="addFinance" class="btn btn-primary" data-en="Add Finance" data-ne="वित्त थप्नुहोस्" aria-label="Add Finance">Add Finance</button>
             <div class="dropdown">
                 <button class="btn btn-success dropdown-toggle" data-bs-toggle="dropdown" data-en="Excel Export" data-ne="एक्सेल निर्यात" aria-label="Excel Export" aria-expanded="false">Excel Export</button>
@@ -77,56 +119,41 @@
             <button id="darkModeToggle" class="btn btn-outline-primary ms-2" data-en="Dark Mode" data-ne="डार्क मोड" aria-label="Toggle Dark Mode">Dark Mode</button>
         </div>
         <div class="row">
+            <div class="col-12 col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <h3 data-en="Income & Expenses" data-ne="आय र खर्च">Income & Expenses</h3>
+                        <canvas id="financeChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <h3 data-en="Budget Overview" data-ne="बजेट अवलोकन">Budget Overview</h3>
+                        <canvas id="budgetChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row mt-4">
             <div class="col-12">
                 <div class="card">
                     <div class="card-body">
-                        <h3 data-en="Financial Reports" data-ne="वित्तीय रिपोर्टहरू">Financial Reports</h3>
-                        <ul class="nav nav-tabs" id="financeTabs" role="tablist">
-                            <li class="nav-item" role="presentation">
-                                <button class="nav-link active" id="weekly-tab" data-bs-toggle="tab" data-bs-target="#weekly" type="button" role="tab" data-en="Weekly" data-ne="साप्ताहिक">Weekly</button>
-                            </li>
-                            <li class="nav-item" role="presentation">
-                                <button class="nav-link" id="monthly-tab" data-bs-toggle="tab" data-bs-target="#monthly" type="button" role="tab" data-en="Monthly" data-ne="मासिक">Monthly</button>
-                            </li>
-                            <li class="nav-item" role="presentation">
-                                <button class="nav-link" id="yearly-tab" data-bs-toggle="tab" data-bs-target="#yearly" type="button" role="tab" data-en="Yearly" data-ne="वार्षिक">Yearly</button>
-                            </li>
-                            <li class="nav-item" role="presentation">
-                                <button class="nav-link" id="records-tab" data-bs-toggle="tab" data-bs-target="#records" type="button" role="tab" data-en="Records" data-ne="रेकर्डहरू">Records</button>
-                            </li>
-                        </ul>
-                        <div class="tab-content" id="financeTabContent">
-                            <div class="tab-pane fade show active" id="weekly" role="tabpanel">
-                                <div class="mt-3">
-                                    <h4 data-en="Weekly Overview" data-ne="साप्ताहिक अवलोकन">Weekly Overview</h4>
-                                    <canvas id="weeklyBudgetChart" aria-label="Weekly Budget Chart"></canvas>
-                                    <div id="weeklySummary"></div>
-                                </div>
-                            </div>
-                            <div class="tab-pane fade" id="monthly" role="tabpanel">
-                                <div class="mt-3">
-                                    <h4 data-en="Monthly Overview" data-ne="मासिक अवलोकन">Monthly Overview</h4>
-                                    <canvas id="monthlyBudgetChart" aria-label="Monthly Budget Chart"></canvas>
-                                    <canvas id="monthlyCategoryChart" aria-label="Monthly Category Chart"></canvas>
-                                    <div id="monthlySummary"></div>
-                                </div>
-                            </div>
-                            <div class="tab-pane fade" id="yearly" role="tabpanel">
-                                <div class="mt-3">
-                                    <h4 data-en="Yearly Overview" data-ne="वार्षिक अवलोकन">Yearly Overview</h4>
-                                    <canvas id="yearlyBudgetChart" aria-label="Yearly Budget Chart"></canvas>
-                                    <div id="yearlySummary"></div>
-                                </div>
-                            </div>
-                            <div class="tab-pane fade" id="records" role="tabpanel">
-                                <div class="mt-3">
-                                    <h4 data-en="All Records" data-ne="सबै रेकर्डहरू">All Records</h4>
-                                    <input type="text" id="financeSearch" class="form-control mb-3" placeholder="Search Records" data-en="Search Records" data-ne="रेकर्डहरू खोज्नुहोस्" aria-label="Search Records">
-                                    <div id="financeRecords"></div>
-                                    <button class="btn btn-danger mt-3" id="clearFinances" data-en="Clear All Finances" data-ne="सबै वित्त मेटाउनुहोस्" aria-label="Clear All Finances">Clear All Finances</button>
-                                </div>
-                            </div>
-                        </div>
+                        <h3 data-en="Transaction History" data-ne="लेनदेन इतिहास">Transaction History</h3>
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th data-en="Date" data-ne="मिति">Date</th>
+                                    <th data-en="Type" data-ne="प्रकार">Type</th>
+                                    <th data-en="Amount" data-ne="रकम">Amount</th>
+                                    <th data-en="Category" data-ne="श्रेणी">Category</th>
+                                    <th data-en="Description" data-ne="विवरण">Description</th>
+                                    <th data-en="Actions" data-ne="कार्यहरू">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="transactionTable"></tbody>
+                        </table>
                     </div>
                 </div>
             </div>
@@ -141,14 +168,13 @@
                 </div>
                 <div class="modal-body">
                     <select id="entryType" class="form-select mb-3" aria-label="Entry Type">
-                        <option value="note" data-en="Note" data-ne="नोट">Note</option>
                         <option value="income" data-en="Income" data-ne="आय">Income</option>
                         <option value="expense" data-en="Expense" data-ne="खर्च">Expense</option>
                     </select>
-                    <input type="text" id="noteTitle" class="form-control mb-3" placeholder="Note Title / Amount" data-en="Note Title / Amount" data-ne="नोट शीर्षक / रकम" aria-label="Note Title or Amount">
+                    <input type="text" id="noteTitle" class="form-control mb-3" placeholder="Amount" data-en="Amount" data-ne="रकम" aria-label="Amount">
                     <input type="time" id="noteTime" class="form-control mb-3" aria-label="Note Time">
                     <textarea id="noteDescription" class="form-control mb-3" placeholder="Description" data-en="Description" data-ne="विवरण" rows="3" aria-label="Description"></textarea>
-                    <select id="entryCategory" class="form-select mb-3" style="display:none" aria-label="Category">
+                    <select id="entryCategory" class="form-select mb-3" aria-label="Category">
                         <option value="" data-en="Select Category" data-ne="श्रेणी चयन गर्नुहोस्">Select Category</option>
                         <option value="Food" data-en="Food" data-ne="खाना">Food</option>
                         <option value="Salary" data-en="Salary" data-ne="तलब">Salary</option>
@@ -159,11 +185,11 @@
                         <option value="Freelance" data-en="Freelance" data-ne="फ्रीलान्स">Freelance</option>
                         <option value="Other" data-en="Other" data-ne="अन्य">Other</option>
                     </select>
-                    <div class="category-manager mb-3" id="categoryManager" style="display:none">
+                    <div class="category-manager mb-3" id="categoryManager">
                         <input type="text" id="newCategory" class="form-control d-inline-block w-75" placeholder="New Category" data-en="New Category" data-ne="नयाँ श्रेणी" aria-label="New Category">
                         <button id="addCategory" class="btn btn-success" data-en="Add Category" data-ne="श्रेणी थप्नुहोस्" aria-label="Add Category">Add Category</button>
                     </div>
-                    <div class="mb-3" id="budgetSection" style="display:none">
+                    <div class="mb-3" id="budgetSection">
                         <input type="number" id="monthlyBudget" class="form-control" placeholder="Monthly Budget (NPR)" data-en="Monthly Budget (NPR)" data-ne="मासिक बजेट (NPR)" aria-label="Monthly Budget">
                     </div>
                     <div class="form-check mb-3">
@@ -185,11 +211,11 @@
     <footer class="bg-light text-center py-3">
         <p class="design-credit">Calendar Concept and Design by Santosh Phuyal</p>
     </footer>
-    <script nonce="OGY1ZmVhYWEtOGRlNy00YjJhLTk4NzEtNjY2OWU2MGNiN2Y2" src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <script nonce="OGY1ZmVhYWEtOGRlNy00YjJhLTk4NzEtNjY2OWU2MGNiN2Y2" src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script nonce="OGY1ZmVhYWEtOGRlNy00YjJhLTk4NzEtNjY2OWU2MGNiN2Y2" src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script nonce="OGY1ZmVhYWEtOGRlNy00YjJhLTk4NzEtNjY2OWU2MGNiN2Y2" src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script nonce="OGY1ZmVhYWEtOGRlNy00YjJhLTk4NzEtNjY2OWU2MGNiN2Y2" src="js/shared.js"></script>
-    <script nonce="OGY1ZmVhYWEtOGRlNy00YjJhLTk4NzEtNjY2OWU2MGNiN2Y2" src="js/finance.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="js/shared.js"></script>
+    <script src="js/finance.js"></script>
 </body>
 </html>
