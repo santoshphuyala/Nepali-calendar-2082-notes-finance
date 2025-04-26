@@ -65,6 +65,12 @@
         .calendar-day.today {
             background-color: #007bff;
             color: #fff;
+            animation: blink 1s infinite;
+        }
+        @keyframes blink {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
         }
         .holiday-list {
             list-style: none;
@@ -72,6 +78,15 @@
         }
         .holiday-list li {
             padding: 5px 0;
+        }
+        .action-box {
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        .action-box button {
+            margin: 5px;
         }
         footer {
             margin-top: 20px;
@@ -87,6 +102,13 @@
         .dark-mode .card {
             background-color: #555;
             color: #fff;
+        }
+        .calendar-container {
+            width: 90%;
+        }
+        .sidebar-container {
+            width: 10%;
+            min-width: 200px;
         }
     </style>
 </head>
@@ -128,8 +150,6 @@
                 <option value="2082" selected data-en="2082 BS" data-ne="2082 BS">2082 BS</option>
                 <option value="2083" data-en="2083 BS" data-ne="2083 BS">2083 BS</option>
             </select>
-            <button id="addNote" class="btn btn-primary" data-en="Add Note" data-ne="नोट थप्नुहोस्" aria-label="Add Note">Add Note</button>
-            <button id="addFinance" class="btn btn-primary" data-en="Add Finance" data-ne="वित्त थप्नुहोस्" aria-label="Add Finance">Add Finance</button>
             <div class="dropdown">
                 <button class="btn btn-success dropdown-toggle" data-bs-toggle="dropdown" data-en="Excel Export" data-ne="एक्सेल निर्यात" aria-label="Excel Export" aria-expanded="false">Excel Export</button>
                 <ul class="dropdown-menu">
@@ -149,7 +169,7 @@
                 </ul>
             </div>
             <div class="dropdown">
-                <button class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown" data-en="Import" data-ne="आयात" aria-label="Import Data" aria-expanded="false">Import</button>
+                <button class="btn btn-primary dropdown-toggle" id="importDropdown" data-bs-toggle="dropdown" data-en="Import" data-ne="आयात" aria-label="Import Data" aria-expanded="false">Import</button>
                 <ul class="dropdown-menu">
                     <li><a class="dropdown-item import-option" href="#" data-type="monthly_calendar" data-en="Monthly Calendar" data-ne="मासिक पात्रो">Monthly Calendar</a></li>
                     <li><a class="dropdown-item import-option" href="#" data-type="yearly_holidays" data-en="Yearly Holidays" data-ne="वार्षिक बिदाहरू">Yearly Holidays</a></li>
@@ -164,7 +184,7 @@
             <button id="darkModeToggle" class="btn btn-outline-primary ms-2" data-en="Dark Mode" data-ne="डार्क मोड" aria-label="Toggle Dark Mode">Dark Mode</button>
         </div>
         <div class="row">
-            <div class="col-12 col-md-8">
+            <div class="calendar-container col-12 col-md-9">
                 <div class="card">
                     <div class="card-body">
                         <h3 data-en="Calendar 2082 BS" data-ne="पात्रो 2082 BS">Calendar 2082 BS</h3>
@@ -223,10 +243,15 @@
                     </div>
                 </div>
             </div>
-            <div class="col-12 col-md-4">
+            <div class="sidebar-container col-12 col-md-3">
+                <div class="action-box">
+                    <h5 data-en="Quick Actions" data-ne="द्रुत कार्यहरू">Quick Actions</h5>
+                    <button id="addNote" class="btn btn-primary" data-en="Add Note" data-ne="नोट थप्नुहोस्" aria-label="Add Note">Add Note</button>
+                    <button id="addFinance" class="btn btn-primary" data-en="Add Finance" data-ne="वित्त थप्नुहोस्" aria-label="Add Finance">Add Finance</button>
+                </div>
                 <div class="card">
                     <div class="card-body">
-                        <h3 data-en="Holidays in 2082 BS" data-ne="2082 BS मा बिदाहरू">Holidays in 2082 BS</h3>
+                        <h5 id="holidayTitle" data-en="Holidays in Baisakh" data-ne="बैशाखमा बिदाहरू">Holidays in Baisakh</h5>
                         <ul class="holiday-list" id="holidayList"></ul>
                     </div>
                 </div>
@@ -285,6 +310,10 @@
     </div>
     <footer class="bg-light text-center py-3">
         <p class="design-credit">Calendar Concept and Design by Santosh Phuyal</p>
+        <div id="footerHolidays">
+            <h5 data-en="Holidays in Baisakh" data-ne="बैशाखमा बिदाहरू">Holidays in Baisakh</h5>
+            <ul class="holiday-list" id="footerHolidayList"></ul>
+        </div>
     </footer>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
