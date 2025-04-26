@@ -146,6 +146,27 @@ document.addEventListener('DOMContentLoaded', () => {
         return date.getDay(); // 0 (Sunday) to 6 (Saturday)
     }
 
+    // Function to Convert Gregorian Date to Nepali Date (Simplified Approximation)
+    function gregorianToNepali(gregDate) {
+        const referenceDate = new Date("2025-04-14"); // Baisakh 1, 2082
+        const diffDays = Math.floor((gregDate - referenceDate) / (1000 * 60 * 60 * 24));
+        let year = 2082;
+        let monthIndex = 0;
+        let date = 1;
+
+        let remainingDays = diffDays;
+        for (let i = 0; i < calendarData[year].length; i++) {
+            if (remainingDays < calendarData[year][i].days) {
+                monthIndex = i;
+                date = remainingDays + 1;
+                break;
+            }
+            remainingDays -= calendarData[year][i].days;
+        }
+
+        return { year, monthIndex, date };
+    }
+
     // Render Calendar Grid
     function renderCalendar(year, monthIndex) {
         const monthData = calendarData[year][monthIndex];
@@ -179,9 +200,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // Add days of the month
-        const today = new Date();
-        const gregStartDate = new Date(monthData.gregStart);
-        const todayNepali = { year: 2082, monthIndex: 0, date: 1 }; // Simplified for demo (adjust based on actual date conversion)
+        const today = new Date(); // Current date (e.g., April 26, 2025)
+        const todayNepali = gregorianToNepali(today); // Convert to Nepali date
+        console.log(`Today in Nepali Calendar: Year ${todayNepali.year}, Month ${todayNepali.monthIndex}, Date ${todayNepali.date}`);
         for (let i = 1; i <= monthData.days; i++) {
             const day = document.createElement('div');
             day.className = 'calendar-day';
@@ -202,26 +223,45 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Render Holidays
-    function renderHolidays(year) {
+    // Render Holidays for the Current Month
+    function renderHolidays(year, monthIndex) {
         const holidayList = document.getElementById('holidayList');
-        if (!holidayList) {
+        const footerHolidayList = document.getElementById('footerHolidayList');
+        const holidayTitle = document.getElementById('holidayTitle');
+        const footerHolidayTitle = document.querySelector('#footerHolidays h5');
+        
+        if (!holidayList || !footerHolidayList) {
             console.error('Holiday list element not found');
             return;
         }
+
+        // Update holiday titles
+        const monthName = isNepali ? monthsNepali[monthIndex] : calendarData[year][monthIndex].name;
+        holidayTitle.textContent = isNepali ? `${monthName}मा बिदाहरू` : `Holidays in ${monthName}`;
+        footerHolidayTitle.textContent = isNepali ? `${monthName}मा बिदाहरू` : `Holidays in ${monthName}`;
+
+        // Clear existing holidays
         holidayList.innerHTML = '';
-        console.log(`Rendering holidays for year ${year}:`, holidays[year]);
-        if (!holidays[year] || holidays[year].length === 0) {
+        footerHolidayList.innerHTML = '';
+
+        // Filter holidays for the current month
+        const monthHolidays = holidays[year]?.filter(h => h.month === monthIndex) || [];
+        console.log(`Rendering holidays for ${monthName}, ${year}:`, monthHolidays);
+
+        if (monthHolidays.length === 0) {
             const li = document.createElement('li');
             li.textContent = isNepali ? 'कुनै बिदा छैन' : 'No holidays';
             holidayList.appendChild(li);
+            footerHolidayList.appendChild(li.cloneNode(true));
             return;
         }
-        holidays[year].forEach(holiday => {
-            const monthName = isNepali ? monthsNepali[holiday.month] : calendarData[year][holiday.month].name;
+
+        monthHolidays.forEach(holiday => {
+            const monthNameDisplay = isNepali ? monthsNepali[holiday.month] : calendarData[year][holiday.month].name;
             const li = document.createElement('li');
-            li.textContent = `${monthName} ${holiday.day}: ${isNepali ? holiday.nepali : holiday.name}`;
+            li.textContent = `${monthNameDisplay} ${holiday.day}: ${isNepali ? holiday.nepali : holiday.name}`;
             holidayList.appendChild(li);
+            footerHolidayList.appendChild(li.cloneNode(true));
         });
     }
 
@@ -232,15 +272,23 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log(`Calling renderCalendar for month ${month.name}, index ${index}`);
             renderCalendar(year, index);
         });
-        renderHolidays(year);
+        renderHolidays(year, currentMonthIndex);
         document.querySelector('h3[data-en="Calendar 2082 BS"]').textContent = isNepali ? `पात्रो ${year} BS` : `Calendar ${year} BS`;
-        document.querySelector('h3[data-en="Holidays in 2082 BS"]').textContent = isNepali ? `${year} BS मा बिदाहरू` : `Holidays in ${year} BS`;
     }
 
     // Year Change Handler
     document.getElementById('yearSelect').addEventListener('change', (e) => {
         currentYear = parseInt(e.target.value);
         initializeCalendar(currentYear);
+        renderHolidays(currentYear, currentMonthIndex);
+    });
+
+    // Month Tab Change Handler
+    document.querySelectorAll('#monthTabs .nav-link').forEach((tab, index) => {
+        tab.addEventListener('click', () => {
+            currentMonthIndex = index;
+            renderHolidays(currentYear, currentMonthIndex);
+        });
     });
 
     // Language Toggle
@@ -250,6 +298,7 @@ document.addEventListener('DOMContentLoaded', () => {
             elem.textContent = isNepali ? elem.getAttribute('data-ne') : elem.getAttribute('data-en');
         });
         initializeCalendar(currentYear);
+        renderHolidays(currentYear, currentMonthIndex);
     });
 
     // Dark Mode Toggle
@@ -431,4 +480,5 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Initialize
     initializeCalendar(currentYear);
+    renderHolidays(currentYear, currentMonthIndex);
 });
