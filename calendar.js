@@ -226,11 +226,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // Render Holidays for the Current Month
     function renderHolidays(year, monthIndex) {
         const holidayList = document.getElementById('holidayList');
-        const footerHolidayList = document.getElementById('footerHolidayList');
+        const holidayListBelowGrid = document.getElementById('holidayListBelowGrid');
         const holidayTitle = document.getElementById('holidayTitle');
-        const footerHolidayTitle = document.querySelector('#footerHolidays h5');
+        const holidayTitleBelowGrid = document.getElementById('holidayTitleBelowGrid');
         
-        if (!holidayList || !footerHolidayList) {
+        if (!holidayList || !holidayListBelowGrid) {
             console.error('Holiday list element not found');
             return;
         }
@@ -238,11 +238,11 @@ document.addEventListener('DOMContentLoaded', () => {
         // Update holiday titles
         const monthName = isNepali ? monthsNepali[monthIndex] : calendarData[year][monthIndex].name;
         holidayTitle.textContent = isNepali ? `${monthName}मा बिदाहरू` : `Holidays in ${monthName}`;
-        footerHolidayTitle.textContent = isNepali ? `${monthName}मा बिदाहरू` : `Holidays in ${monthName}`;
+        holidayTitleBelowGrid.textContent = isNepali ? `${monthName}मा बिदाहरू` : `Holidays in ${monthName}`;
 
         // Clear existing holidays
         holidayList.innerHTML = '';
-        footerHolidayList.innerHTML = '';
+        holidayListBelowGrid.innerHTML = '';
 
         // Filter holidays for the current month
         const monthHolidays = holidays[year]?.filter(h => h.month === monthIndex) || [];
@@ -252,7 +252,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const li = document.createElement('li');
             li.textContent = isNepali ? 'कुनै बिदा छैन' : 'No holidays';
             holidayList.appendChild(li);
-            footerHolidayList.appendChild(li.cloneNode(true));
+            holidayListBelowGrid.appendChild(li.cloneNode(true));
             return;
         }
 
@@ -261,7 +261,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const li = document.createElement('li');
             li.textContent = `${monthNameDisplay} ${holiday.day}: ${isNepali ? holiday.nepali : holiday.name}`;
             holidayList.appendChild(li);
-            footerHolidayList.appendChild(li.cloneNode(true));
+            holidayListBelowGrid.appendChild(li.cloneNode(true));
         });
     }
 
@@ -319,6 +319,27 @@ document.addEventListener('DOMContentLoaded', () => {
         noteFormModal.show();
     });
 
+    // View Note and Finance
+    document.getElementById('viewNote').addEventListener('click', () => {
+        const noteEntries = notes.filter(n => n.type === 'note');
+        if (noteEntries.length === 0) {
+            alert('No notes available.');
+        } else {
+            const noteList = noteEntries.map(n => `Date: ${n.date}, Title: ${n.title}, Description: ${n.description}`).join('\n');
+            alert(`Notes:\n${noteList}`);
+        }
+    });
+
+    document.getElementById('viewFinance').addEventListener('click', () => {
+        const financeEntries = notes.filter(n => n.type === 'income' || n.type === 'expense');
+        if (financeEntries.length === 0) {
+            alert('No finance entries available.');
+        } else {
+            const financeList = financeEntries.map(n => `Date: ${n.date}, Type: ${n.type}, Title: ${n.title}, Amount: ${n.title}, Category: ${n.category || 'N/A'}`).join('\n');
+            alert(`Finance Entries:\n${financeList}`);
+        }
+    });
+
     // Entry Type Change Handler
     entryType.addEventListener('change', () => {
         const type = entryType.value;
@@ -331,6 +352,14 @@ document.addEventListener('DOMContentLoaded', () => {
             categoryManager.style.display = 'block';
             budgetSection.style.display = 'block';
             // Populate custom categories
+            entryCategory.innerHTML = `<option value="" data-en="Select Category" data-ne="श्रेणी चयन गर्नुहोस्">${isNepali ? 'श्रेणी चयन गर्नुहोस्' : 'Select Category'}</option>`;
+            const defaultCategories = ['Food', 'Salary', 'Rent', 'Utilities', 'Transport', 'Entertainment', 'Freelance', 'Other'];
+            defaultCategories.forEach(category => {
+                const option = document.createElement('option');
+                option.value = category;
+                option.textContent = isNepali ? entryCategory.querySelector(`option[value="${category}"]`)?.getAttribute('data-ne') || category : category;
+                entryCategory.appendChild(option);
+            });
             customCategories.forEach(category => {
                 const option = document.createElement('option');
                 option.value = category;
@@ -345,7 +374,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const category = newCategory.value.trim();
         if (category && !customCategories.includes(category)) {
             customCategories.push(category);
-            localStorage.setItem('customCategories', JSON.stringify(customCategories));
+            try {
+                localStorage.setItem('customCategories', JSON.stringify(customCategories));
+            } catch (e) {
+                console.error('Error saving custom categories to localStorage:', e);
+                alert('Failed to save custom category. Please check your browser settings.');
+            }
             const option = document.createElement('option');
             option.value = category;
             option.textContent = category;
@@ -358,42 +392,63 @@ document.addEventListener('DOMContentLoaded', () => {
     saveNote.addEventListener('click', () => {
         const entry = {
             type: entryType.value,
-            title: noteTitle.value,
+            title: noteTitle.value.trim(),
             time: noteTime.value,
-            description: noteDescription.value,
-            category: entryCategory.value,
+            description: noteDescription.value.trim(),
+            category: entryCategory.value || '',
             date: selectedDate.textContent,
             recurring: recurring.checked,
             reminder: reminder.checked,
             year: currentYear,
             month: currentMonthIndex
         };
-        if (editingNoteIndex !== null) {
-            notes[editingNoteIndex] = entry;
-            editingNoteIndex = null;
-            editEntry.style.display = 'none';
-        } else {
-            notes.push(entry);
-            undoStack.push({ action: 'add', note: entry });
+
+        if (!entry.title) {
+            alert('Please enter a title or amount.');
+            return;
         }
-        localStorage.setItem('notes', JSON.stringify(notes));
-        if (entry.type !== 'note') {
-            const budget = parseFloat(monthlyBudget.value) || 0;
-            budgets[`${currentYear}-${currentMonthIndex}`] = budget;
-            localStorage.setItem('budgets', JSON.stringify(budgets));
+
+        try {
+            if (editingNoteIndex !== null) {
+                notes[editingNoteIndex] = entry;
+                editingNoteIndex = null;
+                editEntry.style.display = 'none';
+            } else {
+                notes.push(entry);
+                undoStack.push({ action: 'add', note: entry });
+            }
+            localStorage.setItem('notes', JSON.stringify(notes));
+            if (entry.type !== 'note') {
+                const budget = parseFloat(monthlyBudget.value) || 0;
+                budgets[`${currentYear}-${currentMonthIndex}`] = budget;
+                localStorage.setItem('budgets', JSON.stringify(budgets));
+            }
+            noteFormModal.hide();
+            // Reset form
+            noteTitle.value = '';
+            noteTime.value = '';
+            noteDescription.value = '';
+            entryCategory.value = '';
+            recurring.checked = false;
+            reminder.checked = false;
+            monthlyBudget.value = '';
+        } catch (e) {
+            console.error('Error saving to localStorage:', e);
+            alert('Failed to save entry. Please check your browser settings.');
         }
-        noteFormModal.hide();
-        noteTitle.value = '';
-        noteTime.value = '';
-        noteDescription.value = '';
-        recurring.checked = false;
-        reminder.checked = false;
-        monthlyBudget.value = '';
     });
 
     // Close Modal
     closeEntry.addEventListener('click', () => {
         noteFormModal.hide();
+        // Reset form
+        noteTitle.value = '';
+        noteTime.value = '';
+        noteDescription.value = '';
+        entryCategory.value = '';
+        recurring.checked = false;
+        reminder.checked = false;
+        monthlyBudget.value = '';
     });
 
     // Export Functionality
@@ -466,13 +521,18 @@ document.addEventListener('DOMContentLoaded', () => {
         if (file) {
             const reader = new FileReader();
             reader.onload = (event) => {
-                const data = JSON.parse(event.target.result);
-                const type = e.target.getAttribute('data-import-type');
-                if (type === 'note' || type === 'finance') {
-                    notes = notes.concat(data);
-                    localStorage.setItem('notes', JSON.stringify(notes));
+                try {
+                    const data = JSON.parse(event.target.result);
+                    const type = e.target.getAttribute('data-import-type');
+                    if (type === 'note' || type === 'finance') {
+                        notes = notes.concat(data);
+                        localStorage.setItem('notes', JSON.stringify(notes));
+                    }
+                    console.log(`Imported ${type}:`, data);
+                } catch (e) {
+                    console.error('Error importing data:', e);
+                    alert('Failed to import data. Please ensure the file is valid JSON.');
                 }
-                console.log(`Imported ${type}:`, data);
             };
             reader.readAsText(file);
         }
