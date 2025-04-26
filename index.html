@@ -19,18 +19,22 @@
     <style>
         body {
             font-family: 'Poppins', 'Noto Sans Devanagari', sans-serif;
-            background-color: #f5f7fa;
+            background: linear-gradient(135deg, #e0f7fa 0%, #b2ebf2 100%);
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            overflow: hidden;
         }
         .bg-gradient-primary {
             background: linear-gradient(180deg, #007bff 0%, #0056b3 100%);
-            padding: 20px;
+            padding: 10px;
         }
         .header-title {
-            font-size: 2.5rem;
+            font-size: 2rem;
             margin-bottom: 0;
         }
         .design-credit {
-            font-size: 0.9rem;
+            font-size: 0.8rem;
             opacity: 0.8;
         }
         .navbar-nav .nav-link {
@@ -42,22 +46,24 @@
         }
         .year-filter {
             display: flex;
-            gap: 10px;
+            gap: 8px;
             flex-wrap: wrap;
             justify-content: center;
+            margin: 10px 0;
         }
         .calendar-grid {
             display: grid;
             grid-template-columns: repeat(7, 1fr);
-            gap: 5px;
-            padding: 10px;
+            gap: 4px;
+            padding: 8px;
         }
         .calendar-day {
-            padding: 10px;
+            padding: 8px;
             text-align: center;
             border: 1px solid #ddd;
             background-color: #fff;
             cursor: pointer;
+            border-radius: 4px;
         }
         .calendar-day.holiday {
             background-color: #ffcccc;
@@ -75,24 +81,35 @@
         .holiday-list {
             list-style: none;
             padding: 0;
+            color: #d32f2f;
         }
         .holiday-list li {
-            padding: 5px 0;
+            padding: 4px 0;
         }
         .action-box {
             border: 1px solid #ddd;
-            padding: 10px;
-            margin-bottom: 10px;
+            padding: 8px;
             text-align: center;
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         }
         .action-box button {
-            margin: 5px;
+            margin: 4px;
+            transition: background-color 0.3s;
+        }
+        .action-box button:hover {
+            background-color: #0056b3;
         }
         footer {
-            margin-top: 20px;
+            background-color: #f8f9fa;
+            padding: 8px;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
         }
         .dark-mode {
-            background-color: #333;
+            background: linear-gradient(135deg, #333 0%, #555 100%);
             color: #fff;
         }
         .dark-mode .calendar-day {
@@ -103,12 +120,28 @@
             background-color: #555;
             color: #fff;
         }
+        .dark-mode .action-box {
+            background-color: #666;
+        }
         .calendar-container {
             width: 90%;
+            height: 65vh;
         }
         .sidebar-container {
             width: 10%;
             min-width: 200px;
+            height: 65vh;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .card {
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            height: 100%;
+            overflow-y: auto;
+        }
+        .month-holidays {
+            margin-top: 10px;
         }
     </style>
 </head>
@@ -143,8 +176,8 @@
             </div>
         </nav>
     </header>
-    <div class="container mt-4">
-        <div class="year-filter d-flex flex-wrap justify-content-center gap-2 mb-3">
+    <div class="container mt-2">
+        <div class="year-filter d-flex flex-wrap justify-content-center gap-2 mb-2">
             <select id="yearSelect" class="form-select w-auto" aria-label="Select Year">
                 <option value="2081" data-en="2081 BS" data-ne="2081 BS">2081 BS</option>
                 <option value="2082" selected data-en="2082 BS" data-ne="2082 BS">2082 BS</option>
@@ -179,7 +212,7 @@
             </div>
             <input type="file" id="restoreFileInput" style="display: none;" accept=".json">
         </div>
-        <div class="language-toggle text-center mb-3">
+        <div class="language-toggle text-center mb-2">
             <button id="languageToggle" class="btn btn-outline-primary" data-en="Toggle Language (EN/NE)" data-ne="भाषा टगल गर्नुहोस् (EN/NE)" aria-label="Toggle Language">Toggle Language (EN/NE)</button>
             <button id="darkModeToggle" class="btn btn-outline-primary ms-2" data-en="Dark Mode" data-ne="डार्क मोड" aria-label="Toggle Dark Mode">Dark Mode</button>
         </div>
@@ -242,12 +275,18 @@
                         </div>
                     </div>
                 </div>
+                <div class="month-holidays">
+                    <h5 id="holidayTitleBelowGrid" data-en="Holidays in Baisakh" data-ne="बैशाखमा बिदाहरू">Holidays in Baisakh</h5>
+                    <ul class="holiday-list" id="holidayListBelowGrid"></ul>
+                </div>
             </div>
             <div class="sidebar-container col-12 col-md-3">
                 <div class="action-box">
                     <h5 data-en="Quick Actions" data-ne="द्रुत कार्यहरू">Quick Actions</h5>
                     <button id="addNote" class="btn btn-primary" data-en="Add Note" data-ne="नोट थप्नुहोस्" aria-label="Add Note">Add Note</button>
                     <button id="addFinance" class="btn btn-primary" data-en="Add Finance" data-ne="वित्त थप्नुहोस्" aria-label="Add Finance">Add Finance</button>
+                    <button id="viewNote" class="btn btn-primary" data-en="View Note" data-ne="नोट हेर्नुहोस्" aria-label="View Note">View Note</button>
+                    <button id="viewFinance" class="btn btn-primary" data-en="View Finance" data-ne="वित्त हेर्नुहोस्" aria-label="View Finance">View Finance</button>
                 </div>
                 <div class="card">
                     <div class="card-body">
@@ -308,12 +347,8 @@
             </div>
         </div>
     </div>
-    <footer class="bg-light text-center py-3">
+    <footer class="bg-light text-center">
         <p class="design-credit">Calendar Concept and Design by Santosh Phuyal</p>
-        <div id="footerHolidays">
-            <h5 data-en="Holidays in Baisakh" data-ne="बैशाखमा बिदाहरू">Holidays in Baisakh</h5>
-            <ul class="holiday-list" id="footerHolidayList"></ul>
-        </div>
     </footer>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
