@@ -8,7 +8,7 @@
         default-src 'self';
         script-src 'self' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net;
         img-src 'self' blob: data:;
-        style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+        style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net;
         font-src 'self' https://fonts.gstatic.com;
         connect-src 'self'
     ">
@@ -57,6 +57,7 @@
             text-align: center;
             border: 1px solid #ddd;
             background-color: #fff;
+            cursor: pointer;
         }
         .calendar-day.holiday {
             background-color: #ffcccc;
@@ -74,6 +75,18 @@
         }
         footer {
             margin-top: 20px;
+        }
+        .dark-mode {
+            background-color: #333;
+            color: #fff;
+        }
+        .dark-mode .calendar-day {
+            background-color: #444;
+            color: #fff;
+        }
+        .dark-mode .card {
+            background-color: #555;
+            color: #fff;
         }
     </style>
 </head>
@@ -144,7 +157,7 @@
                     <li><a class="dropdown-item import-option" href="#" data-type="finance" data-en="Finance" data-ne="वित्त">Finance</a></li>
                 </ul>
             </div>
-            <input type="file" id="fileInput" style="display: none;" accept=".json">
+            <input type="file" id="restoreFileInput" style="display: none;" accept=".json">
         </div>
         <div class="language-toggle text-center mb-3">
             <button id="languageToggle" class="btn btn-outline-primary" data-en="Toggle Language (EN/NE)" data-ne="भाषा टगल गर्नुहोस् (EN/NE)" aria-label="Toggle Language">Toggle Language (EN/NE)</button>
@@ -156,18 +169,18 @@
                     <div class="card-body">
                         <h3 data-en="Calendar 2082 BS" data-ne="पात्रो 2082 BS">Calendar 2082 BS</h3>
                         <ul class="nav nav-tabs" id="monthTabs" role="tablist">
-                            <li class="nav-item" role="presentation"><button class="nav-link active" id="baisakh-tab" data-bs-toggle="tab" data-bs-target="#baisakh" type="button" role="tab" aria-controls="baisakh" aria-selected="true" data-en="Baisakh" data-ne="वैशाख">Baisakh</button></li>
+                            <li class="nav-item" role="presentation"><button class="nav-link active" id="baisakh-tab" data-bs-toggle="tab" data-bs-target="#baisakh" type="button" role="tab" aria-controls="baisakh" aria-selected="true" data-en="Baisakh" data-ne="बैशाख">Baisakh</button></li>
                             <li class="nav-item" role="presentation"><button class="nav-link" id="jestha-tab" data-bs-toggle="tab" data-bs-target="#jestha" type="button" role="tab" aria-controls="jestha" aria-selected="false" data-en="Jestha" data-ne="जेठ">Jestha</button></li>
-                            <li class="nav-item" role="presentation"><button class="nav-link" id="asar-tab" data-bs-toggle="tab" data-bs-target="#asar" type="button" role="tab" aria-controls="asar" aria-selected="false" data-en="Asar" data-ne="असार">Asar</button></li>
+                            <li class="nav-item" role="presentation"><button class="nav-link" id="ashadh-tab" data-bs-toggle="tab" data-bs-target="#ashadh" type="button" role="tab" aria-controls="ashadh" aria-selected="false" data-en="Ashadh" data-ne="असार">Ashadh</button></li>
                             <li class="nav-item" role="presentation"><button class="nav-link" id="shrawan-tab" data-bs-toggle="tab" data-bs-target="#shrawan" type="button" role="tab" aria-controls="shrawan" aria-selected="false" data-en="Shrawan" data-ne="श्रावण">Shrawan</button></li>
                             <li class="nav-item" role="presentation"><button class="nav-link" id="bhadra-tab" data-bs-toggle="tab" data-bs-target="#bhadra" type="button" role="tab" aria-controls="bhadra" aria-selected="false" data-en="Bhadra" data-ne="भदौ">Bhadra</button></li>
-                            <li class="nav-item" role="presentation"><button class="nav-link" id="asoj-tab" data-bs-toggle="tab" data-bs-target="#asoj" type="button" role="tab" aria-controls="asoj" aria-selected="false" data-en="Asoj" data-ne="असोज">Asoj</button></li>
+                            <li class="nav-item" role="presentation"><button class="nav-link" id="asoj-tab" data-bs-toggle="tab" data-bs-target="#asoj" type="button" role="tab" aria-controls="asoj" aria-selected="false" data-en="Asoj" data-ne="आश्विन">Asoj</button></li>
                             <li class="nav-item" role="presentation"><button class="nav-link" id="kartik-tab" data-bs-toggle="tab" data-bs-target="#kartik" type="button" role="tab" aria-controls="kartik" aria-selected="false" data-en="Kartik" data-ne="कार्तिक">Kartik</button></li>
                             <li class="nav-item" role="presentation"><button class="nav-link" id="mangsir-tab" data-bs-toggle="tab" data-bs-target="#mangsir" type="button" role="tab" aria-controls="mangsir" aria-selected="false" data-en="Mangsir" data-ne="मंसिर">Mangsir</button></li>
                             <li class="nav-item" role="presentation"><button class="nav-link" id="poush-tab" data-bs-toggle="tab" data-bs-target="#poush" type="button" role="tab" aria-controls="poush" aria-selected="false" data-en="Poush" data-ne="पौष">Poush</button></li>
                             <li class="nav-item" role="presentation"><button class="nav-link" id="magh-tab" data-bs-toggle="tab" data-bs-target="#magh" type="button" role="tab" aria-controls="magh" aria-selected="false" data-en="Magh" data-ne="माघ">Magh</button></li>
-                            <li class="nav-item" role="presentation"><button class="nav-link" id="falgun-tab" data-bs-toggle="tab" data-bs-target="#falgun" type="button" role="tab" aria-controls="falgun" aria-selected="false" data-en="Falgun" data-ne="फागुन">Falgun</button></li>
-                            <li class="nav-item" role="presentation"><button class="nav-link" id="chaitra-tab" data-bs-toggle="tab" data-bs-target="#chaitra" type="button" role="tab" aria-controls="chaitra" aria-selected="false" data-en="Chaitra" data-ne="चैत्र">Chaitra</button></li>
+                            <li class="nav-item" role="presentation"><button class="nav-link" id="falgun-tab" data-bs-toggle="tab" data-bs-target="#falgun" type="button" role="tab" aria-controls="falgun" aria-selected="false" data-en="Falgun" data-ne="फाल्गुन">Falgun</button></li>
+                            <li class="nav-item" role="presentation"><button class="nav-link" id="chaitra-tab" data-bs-toggle="tab" data-bs-target="#chaitra" type="button" role="tab" aria-controls="chaitra" aria-selected="false" data-en="Chaitra" data-ne="चैत">Chaitra</button></li>
                         </ul>
                         <div class="tab-content" id="monthTabContent">
                             <div class="tab-pane fade show active" id="baisakh" role="tabpanel" aria-labelledby="baisakh-tab">
@@ -176,8 +189,8 @@
                             <div class="tab-pane fade" id="jestha" role="tabpanel" aria-labelledby="jestha-tab">
                                 <div class="calendar-grid" id="calendarGridJestha"></div>
                             </div>
-                            <div class="tab-pane fade" id="asar" role="tabpanel" aria-labelledby="asar-tab">
-                                <div class="calendar-grid" id="calendarGridAsar"></div>
+                            <div class="tab-pane fade" id="ashadh" role="tabpanel" aria-labelledby="ashadh-tab">
+                                <div class="calendar-grid" id="calendarGridAshadh"></div>
                             </div>
                             <div class="tab-pane fade" id="shrawan" role="tabpanel" aria-labelledby="shrawan-tab">
                                 <div class="calendar-grid" id="calendarGridShrawan"></div>
@@ -265,7 +278,7 @@
                 </div>
                 <div class="modal-footer">
                     <button id="saveNote" class="btn btn-primary" data-en="Save Entry" data-ne="प्रवेश बचत गर्नुहोस्" aria-label="Save Entry">Save Entry</button>
-                    <button id="editEntry" class="btn btn-success" data-en="Edit Entry" data-ne="प्रवेश सम्पादन गर्नुहोस्" aria-label="Edit Entry">Edit Entry</button>
+                    <button id="editEntry" class="btn btn-success" data-en="Edit Entry" data-ne="प्रवेश सम्पादन गर्नुहोस्" aria-label="Edit Entry" style="display:none">Edit Entry</button>
                 </div>
             </div>
         </div>
@@ -276,215 +289,6 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            // Calendar Data for 2082 BS (Simplified for Demo)
-            const calendarData = {
-                2082: {
-                    Baisakh: { days: 31, startDay: 2, holidays: [{ date: 1, name: "Nepali New Year" }] },
-                    Jestha: { days: 32, startDay: 5, holidays: [] },
-                    Asar: { days: 31, startDay: 1, holidays: [] },
-                    Shrawan: { days: 31, startDay: 3, holidays: [] },
-                    Bhadra: { days: 32, startDay: 6, holidays: [] },
-                    Asoj: { days: 30, startDay: 2, holidays: [{ date: 15, name: "Dashain" }] },
-                    Kartik: { days: 29, startDay: 4, holidays: [] },
-                    Mangsir: { days: 30, startDay: 6, holidays: [] },
-                    Poush: { days: 29, startDay: 1, holidays: [] },
-                    Magh: { days: 29, startDay: 3, holidays: [] },
-                    Falgun: { days: 30, startDay: 5, holidays: [] },
-                    Chaitra: { days: 30, startDay: 0, holidays: [] }
-                }
-            };
-
-            // Render Calendar Grid
-            function renderCalendar(year, month) {
-                const monthData = calendarData[year][month];
-                const grid = document.getElementById(`calendarGrid${month}`);
-                if (!grid) {
-                    console.error(`Calendar grid for ${month} not found`);
-                    return;
-                }
-                grid.innerHTML = '';
-
-                // Add day labels
-                const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-                daysOfWeek.forEach(day => {
-                    const dayLabel = document.createElement('div');
-                    dayLabel.className = 'calendar-day';
-                    dayLabel.textContent = day;
-                    grid.appendChild(dayLabel);
-                });
-
-                // Add empty days before the start of the month
-                for (let i = 0; i < monthData.startDay; i++) {
-                    const emptyDay = document.createElement('div');
-                    emptyDay.className = 'calendar-day';
-                    grid.appendChild(emptyDay);
-                }
-
-                // Add days of the month
-                const today = new Date();
-                const nepaliToday = { year: 2082, month: 'Mangsir', date: 12 }; // Simplified for demo (adjust based on actual date conversion)
-                for (let i = 1; i <= monthData.days; i++) {
-                    const day = document.createElement('div');
-                    day.className = 'calendar-day';
-                    day.textContent = i;
-                    if (monthData.holidays.some(h => h.date === i)) {
-                        day.classList.add('holiday');
-                    }
-                    if (year === nepaliToday.year && month === nepaliToday.month && i === nepaliToday.date) {
-                        day.classList.add('today');
-                    }
-                    day.addEventListener('click', () => {
-                        document.getElementById('selectedDate').textContent = `${month} ${i}, ${year}`;
-                        new bootstrap.Modal(document.getElementById('noteFormModal')).show();
-                    });
-                    grid.appendChild(day);
-                }
-            }
-
-            // Render Holidays
-            function renderHolidays(year) {
-                const holidayList = document.getElementById('holidayList');
-                if (!holidayList) {
-                    console.error('Holiday list element not found');
-                    return;
-                }
-                holidayList.innerHTML = '';
-                Object.keys(calendarData[year]).forEach(month => {
-                    const holidays = calendarData[year][month].holidays;
-                    holidays.forEach(holiday => {
-                        const li = document.createElement('li');
-                        li.textContent = `${month} ${holiday.date}: ${holiday.name}`;
-                        holidayList.appendChild(li);
-                    });
-                });
-            }
-
-            // Initialize Calendar
-            const year = document.getElementById('yearSelect').value;
-            Object.keys(calendarData[year]).forEach(month => renderCalendar(year, month));
-            renderHolidays(year);
-
-            // Year Change Handler
-            document.getElementById('yearSelect').addEventListener('change', (e) => {
-                const selectedYear = e.target.value;
-                Object.keys(calendarData[selectedYear]).forEach(month => renderCalendar(selectedYear, month));
-                renderHolidays(selectedYear);
-            });
-
-            // Language Toggle
-            let isNepali = false;
-            document.getElementById('languageToggle').addEventListener('click', () => {
-                isNepali = !isNepali;
-                document.querySelectorAll('[data-en]').forEach(elem => {
-                    elem.textContent = isNepali ? elem.getAttribute('data-ne') : elem.getAttribute('data-en');
-                });
-            });
-
-            // Dark Mode Toggle
-            document.getElementById('darkModeToggle').addEventListener('click', () => {
-                document.body.classList.toggle('dark-mode');
-                if (document.body.classList.contains('dark-mode')) {
-                    document.body.style.backgroundColor = '#333';
-                    document.body.style.color = '#fff';
-                } else {
-                    document.body.style.backgroundColor = '#f5f7fa';
-                    document.body.style.color = '#000';
-                }
-            });
-
-            // Add Note and Finance
-            document.getElementById('addNote').addEventListener('click', () => {
-                document.getElementById('entryType').value = 'note';
-                document.getElementById('selectedDate').textContent = 'Today';
-                new bootstrap.Modal(document.getElementById('noteFormModal')).show();
-            });
-
-            document.getElementById('addFinance').addEventListener('click', () => {
-                document.getElementById('entryType').value = 'income';
-                document.getElementById('selectedDate').textContent = 'Today';
-                new bootstrap.Modal(document.getElementById('noteFormModal')).show();
-            });
-
-            document.getElementById('saveNote').addEventListener('click', () => {
-                const entry = {
-                    type: document.getElementById('entryType').value,
-                    title: document.getElementById('noteTitle').value,
-                    time: document.getElementById('noteTime').value,
-                    description: document.getElementById('noteDescription').value,
-                    date: document.getElementById('selectedDate').textContent
-                };
-                console.log('Saved Entry:', entry);
-                bootstrap.Modal.getInstance(document.getElementById('noteFormModal')).hide();
-            });
-
-            document.getElementById('closeEntry').addEventListener('click', () => {
-                bootstrap.Modal.getInstance(document.getElementById('noteFormModal')).hide();
-            });
-
-            // Export Functionality
-            document.querySelectorAll('.excel-option').forEach(option => {
-                option.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    const type = e.target.getAttribute('data-type');
-                    let data = [];
-                    if (type === 'monthly_calendar') {
-                        data = Object.keys(calendarData[year]).map(month => ({
-                            Month: month,
-                            Days: calendarData[year][month].days
-                        }));
-                    } else if (type === 'yearly_holidays') {
-                        data = Object.keys(calendarData[year]).flatMap(month =>
-                            calendarData[year][month].holidays.map(h => ({
-                                Month: month,
-                                Date: h.date,
-                                Name: h.name
-                            }))
-                        );
-                    }
-                    const ws = XLSX.utils.json_to_sheet(data);
-                    const wb = XLSX.utils.book_new();
-                    XLSX.utils.book_append_sheet(wb, ws, type);
-                    XLSX.writeFile(wb, `${type}.xlsx`);
-                });
-            });
-
-            document.querySelectorAll('.pdf-option').forEach(option => {
-                option.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    const { jsPDF } = window.jspdf;
-                    const doc = new jsPDF();
-                    const type = e.target.getAttribute('data-type');
-                    doc.text(`Export: ${type}`, 10, 10);
-                    doc.save(`${type}.pdf`);
-                });
-            });
-
-            // Import Functionality
-            document.querySelectorAll('.import-option').forEach(option => {
-                option.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    const type = e.target.getAttribute('data-type');
-                    const fileInput = document.getElementById('fileInput');
-                    fileInput.setAttribute('data-import-type', type);
-                    fileInput.click();
-                });
-            });
-
-            document.getElementById('fileInput').addEventListener('change', (e) => {
-                const file = e.target.files[0];
-                if (file) {
-                    const reader = new FileReader();
-                    reader.onload = (event) => {
-                        const data = JSON.parse(event.target.result);
-                        const type = e.target.getAttribute('data-import-type');
-                        console.log(`Imported ${type}:`, data);
-                    };
-                    reader.readAsText(file);
-                }
-            });
-        });
-    </script>
+    <script src="calendar.js"></script>
 </body>
 </html>
